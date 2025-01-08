@@ -14,6 +14,14 @@ public:
   Node();
   geometry_msgs::msg::Twist last_cmd_vel;
   //void set_params();
+private:
+  // launchファイルのパラメータ
+  double control_frequency;
+  double diagnostic_frequency;
+  std::string serial_port;
+  int serial_baudrate;
+  double cmd_vel_timeout; // /cmd_velのタイムアウト期間
+  double serial_timeout;  // シリアル通信のタイムアウト期間
 };
 
 } // namespace cugo_ros2_control2

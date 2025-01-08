@@ -39,9 +39,13 @@ ament_target_dependencies(
 target_compile_features(cugo_ros2_control2 PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
 install(TARGETS cugo_ros2_control2
-  DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY include/
+  DESTINATION lib/${PROJECT_NAME}
+)
+install(DIRECTORY include
   DESTINATION include/
+)
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/
 )
 
 if(BUILD_TESTING)

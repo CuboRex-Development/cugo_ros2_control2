@@ -8,14 +8,14 @@ Node::Node()
 
   // launchファイルからパラメータを取得
   this->declare_parameter("control_frequency", 10.0);
-  this->declare_parameter("diagnostic_frequency", 1.0);
+  //this->declare_parameter("diagnostic_frequency", 1.0);
   this->declare_parameter("serial_port", "/dev/ttyACM0");
   this->declare_parameter("serial_baudrate", 115200);
   this->declare_parameter("cmd_vel_timeout", 0.5); // 秒
   this->declare_parameter("serial_timeout", 0.5);  // 秒
 
   this->get_parameter("control_frequency", control_frequency);
-  this->get_parameter("diagnostic_frequency", diagnostic_frequency);
+  //this->get_parameter("diagnostic_frequency", diagnostic_frequency);
   this->get_parameter("serial_port", serial_port);
   this->get_parameter("serial_baudrate", serial_baudrate);
   this->get_parameter("cmd_vel_timeout", cmd_vel_timeout);
@@ -23,11 +23,26 @@ Node::Node()
 
   RCLCPP_INFO(this->get_logger(), "設定パラメータ");
   RCLCPP_INFO(this->get_logger(), "control_frequency: %f", control_frequency);
-  RCLCPP_INFO(this->get_logger(), "diagnostic_frequency: %f", diagnostic_frequency);
+  //RCLCPP_INFO(this->get_logger(), "diagnostic_frequency: %f", diagnostic_frequency);
   RCLCPP_INFO(this->get_logger(), "serial_port: %s", serial_port.c_str());
   RCLCPP_INFO(this->get_logger(), "serial_baudrate: %d", serial_baudrate);
   RCLCPP_INFO(this->get_logger(), "cmd_vel_timeout: %f", cmd_vel_timeout);
   RCLCPP_INFO(this->get_logger(), "serial_timeout: %f", serial_timeout);
+
+  // TODO: topic名を変更
+  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+    "/cmd_vel", 10,
+    std::bind(&Node::cmdVelCallback, this, std::placeholders::_1));
+
+  // TODO: topic名を変更
+  odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+}
+
+void Node::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+  RCLCPP_INFO(
+    this->get_logger(), "Received /cmd_vel: linear_x = %f, angular_z = %f",
+    msg->linear.x, msg->angular.z);
 }
 
 int main(int argc, char * argv[])

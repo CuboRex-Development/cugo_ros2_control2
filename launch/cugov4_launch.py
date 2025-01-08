@@ -1,11 +1,12 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
+
 def generate_launch_description():
     # パラメータの定義
     parameters = {
         'control_frequency': 10.0,
-        'diagnostic_frequency': 1.0,
+        # 'diagnostic_frequency': 1.0,
         'serial_port': '/dev/ttyACM0',
         'serial_baudrate': 115200,
         'cmd_vel_timeout': 0.5,   # 秒

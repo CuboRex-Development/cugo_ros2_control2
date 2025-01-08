@@ -1,4 +1,11 @@
-#include "cugo_ros2_control2/cugo_ros2_control2.hpp"
+#include "cugo_ros2_control2/node.hpp"
+
+using namespace cugo_ros2_control2;
+Node::Node()
+: rclcpp::Node("cugo_ros2_control2")
+{
+  RCLCPP_INFO(this->get_logger(), "Cugo ROS 2 Control Node has started.");
+}
 
 int main(int argc, char * argv[])
 {

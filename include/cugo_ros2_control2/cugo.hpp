@@ -1,6 +1,9 @@
 #ifndef CUGO_ROS2_CONTROL2_CUGO_HPP
 #define CUGO_ROS2_CONTROL2_CUGO_HPP
 
+namespace cugo_ros2_control2
+{
+
 class CuGo
 {
 public:
@@ -14,4 +17,6 @@ public:
   void initialize();
   int get_mcu_init_value();
 };
+
+} // namespace cugo_ros2_control2
 #endif  // CUGO_ROS2_CONTROL2_CUGO_HPP

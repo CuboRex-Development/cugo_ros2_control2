@@ -30,19 +30,41 @@ Node::Node()
   RCLCPP_INFO(this->get_logger(), "serial_timeout: %f", serial_timeout);
 
   // TODO: topic名を変更
-  cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+  cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(
     "/cmd_vel", 10,
-    std::bind(&Node::cmdVelCallback, this, std::placeholders::_1));
+    std::bind(&Node::cmd_vel_callback, this, std::placeholders::_1));
 
   // TODO: topic名を変更
-  odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+  odom_pub = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+
+  // メインループ
+  control_timer = this->create_wall_timer(
+    std::chrono::milliseconds(static_cast<int>(1000.0 / control_frequency)),
+    std::bind(&Node::control, this)
+  );
+
+  // タイムアウトをチェック（1Hz）
+  check_timeout_timer = this->create_wall_timer(
+    std::chrono::milliseconds(1000),
+    std::bind(&Node::check_timeouts, this)
+  );
 }
 
-void Node::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
+void Node::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
   RCLCPP_INFO(
     this->get_logger(), "Received /cmd_vel: linear_x = %f, angular_z = %f",
     msg->linear.x, msg->angular.z);
+}
+
+void Node::control()
+{
+  RCLCPP_DEBUG(this->get_logger(), "10Hz Job");
+}
+
+void Node::check_timeouts()
+{
+  RCLCPP_DEBUG(this->get_logger(), "1Hz Job");
 }
 
 int main(int argc, char * argv[])

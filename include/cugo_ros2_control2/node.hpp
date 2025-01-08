@@ -16,20 +16,24 @@ public:
   geometry_msgs::msg::Twist last_cmd_vel;
 
 private:
-  void cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
-  void publishOdom();
-  void checkTimeouts();
+  void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+  void publish_odom();
+  void control();
+  void check_timeouts();
   //void updateDiagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
-  void handleSerialData(std::optional<int32_t> counter);
-
+  void handle_serial_data(std::optional<int32_t> counter);
+  void timer_loop();
 
   // サブスクライバーとパブリッシャー
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
-  rclcpp::TimerBase::SharedPtr odom_timer_;
-  rclcpp::TimerBase::SharedPtr timeout_timer_;
-  //diagnostic_updater::Updater diagnostic_updater_;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
+  rclcpp::TimerBase::SharedPtr odom_timer;
+  rclcpp::TimerBase::SharedPtr timeout_timer;
+  //diagnostic_updater::Updater diagnostic_updater;
 
+  // タイマーコールバック
+  rclcpp::TimerBase::SharedPtr control_timer;
+  rclcpp::TimerBase::SharedPtr check_timeout_timer;
   // launchファイルのパラメータ
   double control_frequency;
   //double diagnostic_frequency;

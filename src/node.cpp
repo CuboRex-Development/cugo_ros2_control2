@@ -52,9 +52,13 @@ Node::Node()
 
 void Node::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
-  RCLCPP_INFO(
+  linear_x = msg->linear.x;
+  angular_z = msg->angular.z;
+  recv_time_cmdvel = this->get_clock()->now();
+  RCLCPP_DEBUG(
     this->get_logger(), "Received /cmd_vel: linear_x = %f, angular_z = %f",
-    msg->linear.x, msg->angular.z);
+    linear_x, angular_z);
+  RCLCPP_DEBUG(this->get_logger(), "recv_time_cmdvel update: %f", recv_time_cmdvel.seconds());
 }
 
 void Node::control()

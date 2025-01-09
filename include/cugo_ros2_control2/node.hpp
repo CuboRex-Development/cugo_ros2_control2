@@ -35,12 +35,15 @@ private:
   rclcpp::TimerBase::SharedPtr control_timer;
   rclcpp::TimerBase::SharedPtr check_timeout_timer;
   // launchファイルのパラメータ
-  double control_frequency;
+  float control_frequency;
   //double diagnostic_frequency;
   std::string serial_port;
   int serial_baudrate;
-  double cmd_vel_timeout; // /cmd_velのタイムアウト期間
-  double serial_timeout;  // シリアル通信のタイムアウト期間
+  float cmd_vel_timeout; // /cmd_velのタイムアウト期間
+  float serial_timeout;  // シリアル通信のタイムアウト期間
+
+  double linear_x, angular_z;
+  rclcpp::Time recv_time_cmdvel;
 };
 
 } // namespace cugo_ros2_control2

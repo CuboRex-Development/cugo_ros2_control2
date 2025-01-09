@@ -1,6 +1,5 @@
 #ifndef CUGO_ROS2_CONTROL2_CUGO_HPP
 #define CUGO_ROS2_CONTROL2_CUGO_HPP
-
 #include <math.h>
 
 struct RPM

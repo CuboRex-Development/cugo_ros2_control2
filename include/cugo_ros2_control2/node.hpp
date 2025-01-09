@@ -42,6 +42,10 @@ private:
   int serial_baudrate;
   float cmd_vel_timeout; // /cmd_velのタイムアウト期間
   float serial_timeout;  // シリアル通信のタイムアウト期間
+  float tread;
+  float l_wheel_radius, r_wheel_radius;
+  float reduction_ratio;
+  int encoder_resolution;
 
   double linear_x, angular_z;
   rclcpp::Time recv_time_cmdvel;

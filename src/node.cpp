@@ -13,6 +13,11 @@ Node::Node()
   this->declare_parameter("serial_baudrate", 115200);
   this->declare_parameter("cmd_vel_timeout", 0.5); // 秒
   this->declare_parameter("serial_timeout", 0.5);  // 秒
+  this->declare_parameter("tread", 0.376);
+  this->declare_parameter("l_wheel_radius", 0.03858);
+  this->declare_parameter("r_wheel_radius", 0.03858);
+  this->declare_parameter("reduction_ratio", 20.0);
+  this->declare_parameter("encoder_resolution", 30);
 
   this->get_parameter("control_frequency", control_frequency);
   //this->get_parameter("diagnostic_frequency", diagnostic_frequency);
@@ -20,6 +25,11 @@ Node::Node()
   this->get_parameter("serial_baudrate", serial_baudrate);
   this->get_parameter("cmd_vel_timeout", cmd_vel_timeout);
   this->get_parameter("serial_timeout", serial_timeout);
+  this->get_parameter("tread", tread);
+  this->get_parameter("l_wheel_radius", l_wheel_radius);
+  this->get_parameter("r_wheel_radius", r_wheel_radius);
+  this->get_parameter("reduction_ratio", reduction_ratio);
+  this->get_parameter("encoder_resolution", encoder_resolution);
 
   RCLCPP_INFO(this->get_logger(), "設定パラメータ");
   RCLCPP_INFO(this->get_logger(), "control_frequency: %f", control_frequency);
@@ -28,6 +38,11 @@ Node::Node()
   RCLCPP_INFO(this->get_logger(), "serial_baudrate: %d", serial_baudrate);
   RCLCPP_INFO(this->get_logger(), "cmd_vel_timeout: %f", cmd_vel_timeout);
   RCLCPP_INFO(this->get_logger(), "serial_timeout: %f", serial_timeout);
+  RCLCPP_INFO(this->get_logger(), "tread: %f", tread);
+  RCLCPP_INFO(this->get_logger(), "l_wheel_radius: %f", l_wheel_radius);
+  RCLCPP_INFO(this->get_logger(), "r_wheel_radius: %f", r_wheel_radius);
+  RCLCPP_INFO(this->get_logger(), "reduction_ratio: %f", reduction_ratio);
+  RCLCPP_INFO(this->get_logger(), "encoder_resolution: %d", encoder_resolution);
 
   // TODO: topic名を変更
   cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(

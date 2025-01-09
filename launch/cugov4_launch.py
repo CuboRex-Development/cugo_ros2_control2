@@ -19,8 +19,13 @@ def generate_launch_description():
         # 'diagnostic_frequency': 1.0,
         'serial_port': '/dev/ttyACM0',
         'serial_baudrate': 115200,
-        'cmd_vel_timeout': 0.5,   # 秒
-        'serial_timeout': 0.5     # 秒
+        'cmd_vel_timeout': 0.5,     # 秒
+        'serial_timeout': 0.5,      # 秒
+        'tread': 0.376,             # cugov4のトレッド幅
+        'l_wheel_radius': 0.03858,  # cugov4のスプロケット半径
+        'r_wheel_radius': 0.03858,  # cugov4のスプロケット半径
+        'reduction_ratio': 20.0,    # cugov4のオリエンタルモータの減速比
+        'encoder_resolution': 30    # cugov4のオリエンタルモータのエンコーダホール数
         # 必要に応じて他のパラメータも追加
     }
 

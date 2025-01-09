@@ -5,6 +5,7 @@
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include "cugo_ros2_control2/cugo.hpp"
 
 namespace cugo_ros2_control2
 {

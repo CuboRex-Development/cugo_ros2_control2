@@ -18,9 +18,6 @@ find_package(diagnostic_updater REQUIRED)
 
 # 実行ファイルの作成
 add_executable(cugo_ros2_control2 src/node.cpp src/cugo.cpp src/serial.cpp)
-#add_library(cugo src/cugo.cpp)
-#add_library(serial src/serial.cpp)
-#target_link_libraries(cugo_ros2_control2 cugo serial)
 
 # インクルードディレクトリの追加
 include_directories(
@@ -50,12 +47,12 @@ install(DIRECTORY launch
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  find_package(ament_cmake_gtest REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
-  find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(test_node test/node.cpp)
-  #target_link_libraries(node_test cugo_ros2_control2)
+  ament_add_gtest(test_node test/test_node.cpp)
+  ament_add_gtest(test_cugo test/test_cugo.cpp)
 endif()
 
 ament_package()

@@ -24,6 +24,9 @@ public:
   bool check_timeout();
   void initialize();
   int get_mcu_init_value();
+  float get_tread();
+  float get_l_wheel_radius();
+  float get_r_wheel_radius();
 
 private:
   float tread;

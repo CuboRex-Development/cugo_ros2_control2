@@ -4,9 +4,9 @@ using namespace cugo_ros2_control2;
 CuGo::CuGo()
 {
   // configによる指定がない場合はV4のパラメータを使用する
-  l_wheel_radius = 0.03858;
-  r_wheel_radius = 0.03858;
-  tread = 0.376;
+  l_wheel_radius = 0.03858f;
+  r_wheel_radius = 0.03858f;
+  tread = 0.376f;
 }
 
 CuGo::CuGo(float config_l_radius, float config_r_radius, float config_tread)
@@ -32,9 +32,23 @@ RPM CuGo::calc_rpm(float linear_x, float angular_z)
   return rpm;
 }
 
-void cugo_ros2_control2::CuGo::calc_twist() {}
-void cugo_ros2_control2::CuGo::calc_odom() {}
-bool cugo_ros2_control2::CuGo::check_invalid_value() {return false;}
-bool cugo_ros2_control2::CuGo::check_timeout() {return false;}
-void cugo_ros2_control2::CuGo::initialize() {}
-int cugo_ros2_control2::CuGo::get_mcu_init_value() {return 0;}
+void CuGo::calc_twist() {}
+void CuGo::calc_odom() {}
+bool CuGo::check_invalid_value() {return false;}
+bool CuGo::check_timeout() {return false;}
+void CuGo::initialize() {}
+int CuGo::get_mcu_init_value() {return 0;}
+float CuGo::get_tread()
+{
+  return tread;
+}
+
+float CuGo::get_l_wheel_radius()
+{
+  return l_wheel_radius;
+}
+
+float CuGo::get_r_wheel_radius()
+{
+  return r_wheel_radius;
+}

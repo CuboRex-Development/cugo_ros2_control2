@@ -17,6 +17,8 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 
 # 実行ファイルの作成
+add_library(cugo_lib src/cugo.cpp)
+#add_library(serial_lib src/serial.cpp) # serial.cppの実装が始まってからやる
 add_executable(cugo_ros2_control2 src/node.cpp src/cugo.cpp src/serial.cpp)
 
 # インクルードディレクトリの追加
@@ -53,6 +55,7 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
   ament_add_gtest(test_node test/test_node.cpp)
   ament_add_gtest(test_cugo test/test_cugo.cpp)
+  target_link_libraries(test_cugo cugo_lib)
 endif()
 
 ament_package()

@@ -24,10 +24,9 @@ protected:
   CuGo cugo_custom{0.044f, 0.045f, 0.8f};
 };
 
-// 静的環境のテスト
-TEST_F(CuGoTest, test_static)
+// 初期化パラメータなど固定なものの代入が正しいか
+TEST_F(CuGoTest, test_initialize)
 {
-  // 初期化パラメータなど固定なものの代入が正しいか
   ASSERT_EQ(cugo_default.get_tread(), 0.376f);
   ASSERT_EQ(cugo_default.get_l_wheel_radius(), 0.03858f);
   ASSERT_EQ(cugo_default.get_r_wheel_radius(), 0.03858f);
@@ -36,22 +35,34 @@ TEST_F(CuGoTest, test_static)
   ASSERT_EQ(cugo_custom.get_r_wheel_radius(), 0.045f);
 }
 
-// パラメータ付きコンストラクタで初期化されたインスタンスの calc_rpm メソッドをテスト
-TEST_F(CuGoTest, CalcRPM_CustomConstructor)
+// calc_rpm()の出力値テスト
+TEST_F(CuGoTest, test_calc_rpm)
 {
-  // テスト入力
-  //float linear_x = 2.0f;   // m/s
-  //float angular_z = 1.0f;  // rad/s
-  /*
-  // calc_rpm メソッドの呼び出し
+  // 速度0入力
+  float linear_x = 0.0f;
+  float angular_z = 0.0f;
   RPM rpm = cugo_default.calc_rpm(linear_x, angular_z);
+  ASSERT_EQ(rpm.l_rpm, 0.0f);
+  ASSERT_EQ(rpm.r_rpm, 0.0f);
 
-  // 期待される RPM（手動計算された値）
-  float expected_l_rpm = 432.91f;
-  float expected_r_rpm = 522.43f;
+  // 前後進のみ入力
+  linear_x = 0.5f;
+  angular_z = 0.0f;
+  rpm = cugo_default.calc_rpm(linear_x, angular_z);
+  ASSERT_NEAR(rpm.l_rpm, 123.7596758f, 1e-2);
+  ASSERT_NEAR(rpm.r_rpm, 123.7596758f, 1e-2);
 
-  // 結果の検証
-  EXPECT_NEAR(rpm.l_rpm, expected_l_rpm, 1e-2);
-  EXPECT_NEAR(rpm.r_rpm, expected_r_rpm, 1e-2);
-   */
+  // 回転のみ入力
+  linear_x = -0.5f;
+  angular_z = 0.0f;
+  rpm = cugo_default.calc_rpm(linear_x, angular_z);
+  ASSERT_NEAR(rpm.l_rpm, -123.7596758f, 1e-2);
+  ASSERT_NEAR(rpm.r_rpm, -123.7596758f, 1e-2);
+
+  // 曲がりながら走行するベクトルを入力
+  linear_x = 0.5f;
+  angular_z = 1.0f;
+  rpm = cugo_default.calc_rpm(linear_x, angular_z);
+  ASSERT_NEAR(rpm.l_rpm, 77.22603771f, 1e-2);
+  ASSERT_NEAR(rpm.r_rpm, 170.2933139f, 1e-2);
 }

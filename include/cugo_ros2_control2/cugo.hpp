@@ -8,6 +8,13 @@ struct RPM
   float r_rpm;
 };
 
+struct Twist
+{
+  float linear_x;
+  float angular_z;
+};
+
+
 namespace cugo_ros2_control2
 {
 
@@ -15,10 +22,12 @@ class CuGo
 {
 public:
   CuGo();
-  CuGo(float config_l_radius, float config_r_radius, float config_tread);
+  CuGo(
+    float config_l_radius, float config_r_radius, float config_tread,
+    float config_reduction_ratio, float config_encoder_resolution);
   void set_params();
   RPM calc_rpm(float linear_x, float angular_z);
-  void calc_twist();
+  Twist calc_twist(int count_diff_l, int count_diff_r, float dt);
   void calc_odom();
   bool check_invalid_value();
   bool check_timeout();
@@ -27,10 +36,16 @@ public:
   float get_tread();
   float get_l_wheel_radius();
   float get_r_wheel_radius();
+  float get_reduction_ratio();
+  float get_encoder_resolution();
 
 private:
   float tread;
   float l_wheel_radius, r_wheel_radius;
+  float reduction_ratio;
+  float encoder_resolution;
+  int count_diff_l, count_diff_r;
+  bool serial_timeout, twist_timeout;
 };
 
 } // namespace cugo_ros2_control2

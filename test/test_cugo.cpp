@@ -73,19 +73,58 @@ TEST_F(CuGoTest, test_calc_rpm)
 TEST_F(CuGoTest, test_calc_twist)
 {
   Twist twist;
-  twist = cugo_default.calc_twist(0, 0, 0.1f);
-  ASSERT_NEAR(twist.linear_x, 0.0f, 1e-2);
-  ASSERT_NEAR(twist.angular_z, 0.0f, 1e-2);
+  twist = cugo_default.calc_twist(0, 0, 0.1);
+  ASSERT_NEAR(twist.linear_x, 0.0, 1e-4);
+  ASSERT_NEAR(twist.angular_z, 0.0, 1e-4);
 
-  twist = cugo_default.calc_twist(100, 100, 0.1f);
-  ASSERT_NEAR(twist.linear_x, 0.03366740127f, 1e-2);
-  ASSERT_NEAR(twist.angular_z, 0.0f, 1e-2);
+  twist = cugo_default.calc_twist(100, 100, 0.1);
+  ASSERT_NEAR(twist.linear_x, 0.03366740127, 1e-4);
+  ASSERT_NEAR(twist.angular_z, 0.0, 1e-4);
 
-  twist = cugo_default.calc_twist(100, -100, 0.1f);
-  ASSERT_NEAR(twist.linear_x, 0.0f, 1e-2);
-  ASSERT_NEAR(twist.angular_z, -0.1790819217f, 1e-2);
+  twist = cugo_default.calc_twist(100, -100, 0.1);
+  ASSERT_NEAR(twist.linear_x, 0.0, 1e-4);
+  ASSERT_NEAR(twist.angular_z, -0.1790819217, 1e-4);
 
-  twist = cugo_default.calc_twist(200, 100, 0.1f);
-  ASSERT_NEAR(twist.linear_x, 0.0505011019f, 1e-2);
-  ASSERT_NEAR(twist.angular_z, -0.08954096082f, 1e-2);
+  twist = cugo_default.calc_twist(200, 100, 0.1);
+  ASSERT_NEAR(twist.linear_x, 0.0505011019, 1e-4);
+  ASSERT_NEAR(twist.angular_z, -0.08954096082, 1e-4);
+}
+
+// twistの累積が正しいかどうか
+TEST_F(CuGoTest, test_calc_odom)
+{
+  Odom odom;
+  odom.x = 0.0;
+  odom.y = 0.0;
+  odom.yaw = 0.0;
+  Twist twist;
+  twist.linear_x = 0.0;
+  twist.angular_z = 0.0;
+  float dt = 0.1;
+
+  odom = cugo_default.calc_odom(odom, twist, dt);
+  ASSERT_NEAR(odom.x, 0.0, 1e-4);
+  ASSERT_NEAR(odom.y, 0.0, 1e-4);
+  ASSERT_NEAR(odom.yaw, 0.0, 1e-4);
+
+  twist.linear_x = 0.5;
+  twist.angular_z = 0.0;
+  odom = cugo_default.calc_odom(odom, twist, dt);
+  ASSERT_NEAR(odom.x, 0.05, 1e-4);
+  ASSERT_NEAR(odom.y, 0.0, 1e-4);
+  ASSERT_NEAR(odom.yaw, 0.0, 1e-4);
+
+  twist.linear_x = 0.3;
+  twist.angular_z = 1.57;
+  odom = cugo_default.calc_odom(odom, twist, dt);
+  ASSERT_NEAR(odom.x, 0.07963102384, 1e-4);
+  ASSERT_NEAR(odom.y, 0.004690674368, 1e-4);
+  ASSERT_NEAR(odom.yaw, 0.157, 1e-4);
+
+  twist.linear_x = 0.5;
+  twist.angular_z = -3.14;
+  odom = cugo_default.calc_odom(odom, twist, dt);
+  ASSERT_NEAR(odom.x, 0.1290160636, 1e-4);
+  ASSERT_NEAR(odom.y, -0.003127116246, 1e-4);
+  ASSERT_NEAR(odom.yaw, -0.157, 1e-4);
 }

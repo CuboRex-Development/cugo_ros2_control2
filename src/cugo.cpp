@@ -1,4 +1,5 @@
 #include "cugo_ros2_control2/cugo.hpp"
+#include <iostream>
 
 using namespace cugo_ros2_control2;
 CuGo::CuGo()
@@ -54,7 +55,18 @@ Twist CuGo::calc_twist(int l_count_diff, int r_count_diff, float dt)
   return twist;
 }
 
-void CuGo::calc_odom() {}
+Odom CuGo::calc_odom(Odom input_odom, Twist twist, float dt)
+{
+  Odom output_odom;
+  output_odom.x = 0.0;
+  output_odom.y = 0.0;
+  output_odom.yaw = 0.0;
+  output_odom.yaw = input_odom.yaw + twist.angular_z * dt;
+  output_odom.x = input_odom.x + twist.linear_x * dt * cos(output_odom.yaw);
+  output_odom.y = input_odom.y + twist.linear_x * dt * sin(output_odom.yaw);
+  return output_odom;
+}
+
 bool CuGo::check_invalid_value() {return false;}
 bool CuGo::check_timeout() {return false;}
 void CuGo::initialize() {}

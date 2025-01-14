@@ -14,6 +14,13 @@ struct Twist
   float angular_z;
 };
 
+struct Odom
+{
+  float x;
+  float y;
+  float yaw;
+};
+
 
 namespace cugo_ros2_control2
 {
@@ -28,7 +35,7 @@ public:
   void set_params();
   RPM calc_rpm(float linear_x, float angular_z);
   Twist calc_twist(int count_diff_l, int count_diff_r, float dt);
-  void calc_odom();
+  Odom calc_odom(Odom odom, Twist twist, float dt);
   bool check_invalid_value();
   bool check_timeout();
   void initialize();

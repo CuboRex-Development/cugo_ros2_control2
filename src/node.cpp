@@ -44,6 +44,9 @@ Node::Node()
   RCLCPP_INFO(this->get_logger(), "reduction_ratio: %f", reduction_ratio);
   RCLCPP_INFO(this->get_logger(), "encoder_resolution: %d", encoder_resolution);
 
+  CuGo cugo{l_wheel_radius, r_wheel_radius, tread, reduction_ratio, encoder_resolution};
+  //Serial serial{hoge,piyo,fuga};
+
   // TODO: topic名を変更
   cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(
     "/cmd_vel", 10,
@@ -63,17 +66,24 @@ Node::Node()
     std::chrono::milliseconds(1000),
     std::bind(&Node::check_timeouts, this)
   );
+
 }
 
 void Node::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
-  linear_x = msg->linear.x;
-  angular_z = msg->angular.z;
-  recv_time_cmdvel = this->get_clock()->now();
+  last_cmd_vel.linear_x = msg->linear.x;
+  last_cmd_vel.angular_z = msg->angular.z;
+  recvtime_cmdvel = this->get_clock()->now();
   RCLCPP_DEBUG(
     this->get_logger(), "Received /cmd_vel: linear_x = %f, angular_z = %f",
-    linear_x, angular_z);
-  RCLCPP_DEBUG(this->get_logger(), "recv_time_cmdvel update: %f", recv_time_cmdvel.seconds());
+    last_cmd_vel.linear_x, last_cmd_vel.angular_z);
+  RCLCPP_DEBUG(this->get_logger(), "recvtime_cmdvel update: %f", recvtime_cmdvel.seconds());
+}
+
+// TODO:未テスト
+float Node::check_difftime(rclcpp::Time recvtime, rclcpp::Time prev_recvtime)
+{
+  return recvtime.seconds() - prev_recvtime.seconds();
 }
 
 void Node::control()
@@ -86,6 +96,7 @@ void Node::check_timeouts()
   RCLCPP_DEBUG(this->get_logger(), "1Hz Job");
 }
 
+/*
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
@@ -96,3 +107,4 @@ int main(int argc, char * argv[])
   executor.spin();
   return 0;
 }
+*/

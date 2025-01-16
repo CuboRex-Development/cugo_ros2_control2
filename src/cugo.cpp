@@ -14,7 +14,7 @@ CuGo::CuGo()
 
 CuGo::CuGo(
   float config_l_radius, float config_r_radius, float config_tread,
-  float config_reduction_ratio, float config_encoder_resolution)
+  float config_reduction_ratio, int config_encoder_resolution)
 {
   // configによる指定がある場合はlaunchファイルのパラメータを使用する
   l_wheel_radius = config_l_radius;
@@ -94,4 +94,15 @@ float CuGo::get_reduction_ratio()
 float CuGo::get_encoder_resolution()
 {
   return encoder_resolution;
+}
+
+void CuGo::set_twist(float linear_x, float angular_z)
+{
+  recv_twist.linear_x = linear_x;
+  recv_twist.angular_z = angular_z;
+}
+
+void CuGo::set_difftime_cmdvel(float difftime)
+{
+  difftime_cmdvel = difftime;
 }

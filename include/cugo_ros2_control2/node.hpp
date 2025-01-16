@@ -14,7 +14,8 @@ class Node : public rclcpp::Node
 {
 public:
   Node();
-  geometry_msgs::msg::Twist last_cmd_vel;
+  //geometry_msgs::msg::Twist last_cmd_vel;
+  float check_difftime(rclcpp::Time recvtime, rclcpp::Time prev_recvtime);
 
 private:
   void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
@@ -48,7 +49,12 @@ private:
   int encoder_resolution;
 
   double linear_x, angular_z;
-  rclcpp::Time recv_time_cmdvel;
+  rclcpp::Time prev_recvtime_cmdvel = this->get_clock()->now();
+  rclcpp::Time recvtime_cmdvel = prev_recvtime_cmdvel;
+  rclcpp::Time prev_recvtime_serial = this->get_clock()->now();
+  rclcpp::Time recvtime_serial = prev_recvtime_serial;
+
+  Twist last_cmd_vel;
 };
 
 } // namespace cugo_ros2_control2

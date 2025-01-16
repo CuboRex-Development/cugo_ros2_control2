@@ -18,14 +18,36 @@ find_package(diagnostic_updater REQUIRED)
 
 # 実行ファイルの作成
 add_library(cugo_lib src/cugo.cpp)
-#add_library(serial_lib src/serial.cpp) # serial.cppの実装が始まってからやる
-add_executable(cugo_ros2_control2 src/node.cpp src/cugo.cpp src/serial.cpp)
-
-# インクルードディレクトリの追加
-include_directories(
-  include
+ament_target_dependencies(cugo_lib
+  rclcpp
+  std_msgs
+  nav_msgs
+  geometry_msgs
+  diagnostic_updater
 )
 
+#add_library(serial_lib src/serial.cpp)
+#ament_target_dependencies(serial_lib
+#  rclcpp
+#  std_msgs
+#  nav_msgs
+#  geometry_msgs
+#  diagnostic_updater
+#)
+
+add_library(node_lib src/node.cpp)
+target_link_libraries(node_lib cugo_lib)
+#target_link_libraries(node_lib cugo_lib serial_lib)
+ament_target_dependencies(node_lib
+  rclcpp
+  std_msgs
+  nav_msgs
+  geometry_msgs
+  diagnostic_updater
+)
+
+add_executable(cugo_ros2_control2 src/main.cpp)
+target_link_libraries(cugo_ros2_control2 cugo_lib node_lib)
 ament_target_dependencies(
   cugo_ros2_control2
   rclcpp
@@ -33,6 +55,11 @@ ament_target_dependencies(
   nav_msgs
   geometry_msgs
   diagnostic_updater
+)
+
+# インクルードディレクトリの追加
+include_directories(
+  include
 )
 
 target_compile_features(cugo_ros2_control2 PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
@@ -53,9 +80,29 @@ if(BUILD_TESTING)
   set(ament_cmake_copyright_FOUND TRUE)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
-  ament_add_gtest(test_node test/test_node.cpp)
+
+  # node.cppのテスト
+  ament_add_gtest(test_node test/test_node.cpp src/node.cpp)
+  target_link_libraries(test_node cugo_lib)
+  ament_target_dependencies(test_node
+    rclcpp
+    std_msgs
+    nav_msgs
+    geometry_msgs
+    diagnostic_updater
+  )
+
+  # cugo.cppのテスト
   ament_add_gtest(test_cugo test/test_cugo.cpp)
   target_link_libraries(test_cugo cugo_lib)
+  ament_target_dependencies(test_node
+    rclcpp
+    std_msgs
+    nav_msgs
+    geometry_msgs
+    diagnostic_updater
+  )
+
 endif()
 
 ament_package()

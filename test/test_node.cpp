@@ -1,23 +1,30 @@
 #include <gtest/gtest.h>
-#include "cugo_ros2_control2/cugo.hpp"
+#include "cugo_ros2_control2/node.hpp"
 
-/*
-// 既存のテストコード
-TEST(CuGoTest, InitializationTest)
-{
-  EXPECT_EQ(0, 0);
-}
+using namespace cugo_ros2_control2;
 
-// 失敗するテストコード
-TEST(CuGoTest, FailingTest)
+class NodeTest : public ::testing::Test
 {
-  // 意図的に失敗させる条件
-  EXPECT_EQ(0, 1);
-}
-*/
+protected:
+  void SetUp() override
+  {
 
-int main(int argc, char ** argv)
+  }
+
+  void TearDown() override
+  {
+
+  }
+
+//  Node node;
+};
+
+// cmdvelのタイムアウト算出
+TEST_F(NodeTest, test_check_dt)
 {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+  /*
+  rclcpp::Time prevtime = node.get_clock()->now();
+  rclcpp::Time recvtime = node.get_clock()->now();
+  ASSERT_NEAR(node.check_difftime(recvtime, prevtime), 0.0, 1e-2);
+  */
 }

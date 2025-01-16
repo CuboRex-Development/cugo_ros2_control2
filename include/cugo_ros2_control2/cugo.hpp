@@ -31,7 +31,7 @@ public:
   CuGo();
   CuGo(
     float config_l_radius, float config_r_radius, float config_tread,
-    float config_reduction_ratio, float config_encoder_resolution);
+    float config_reduction_ratio, int config_encoder_resolution);
   void set_params();
   RPM calc_rpm(float linear_x, float angular_z);
   Twist calc_twist(int count_diff_l, int count_diff_r, float dt);
@@ -45,14 +45,18 @@ public:
   float get_r_wheel_radius();
   float get_reduction_ratio();
   float get_encoder_resolution();
+  void set_twist(float linear_x, float angular_z);
+  void set_difftime_cmdvel(float difftime);
 
 private:
   float tread;
   float l_wheel_radius, r_wheel_radius;
   float reduction_ratio;
-  float encoder_resolution;
+  int encoder_resolution;
   int count_diff_l, count_diff_r;
   bool serial_timeout, twist_timeout;
+  Twist recv_twist;
+  float difftime_cmdvel;
 };
 
 } // namespace cugo_ros2_control2

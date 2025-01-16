@@ -15,7 +15,7 @@ class Node : public rclcpp::Node
 public:
   Node();
   //geometry_msgs::msg::Twist last_cmd_vel;
-  float check_difftime(rclcpp::Time recvtime, rclcpp::Time prev_recvtime);
+  float check_difftime(float recvtime, float prev_recvtime);
 
 private:
   void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);

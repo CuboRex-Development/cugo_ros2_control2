@@ -6,22 +6,44 @@ using namespace cugo_ros2_control2;
 class NodeTest : public ::testing::Test
 {
 protected:
+  // テストスイート全体で一度だけ実行されるセットアップ
+  static void SetUpTestSuite()
+  {
+    // ROS 2 の初期化
+    rclcpp::init(0, nullptr);
+  }
+
+  // テストスイート全体で一度だけ実行されるティアダウン
+  static void TearDownTestSuite()
+  {
+    // ROS 2 のシャットダウン
+    rclcpp::shutdown();
+  }
+
+  // 各テストケース前に実行されるセットアップ
   void SetUp() override
   {
-
+    // Nodeのインスタンス化
+    node = std::make_shared<Node>();
   }
 
+  // 各テストケース後に実行されるティアダウン
   void TearDown() override
   {
-
+    // Nodeのクリーンアップ
+    node.reset();
   }
 
-//  Node node;
+  std::shared_ptr<Node> node;
 };
 
 // cmdvelのタイムアウト算出
 TEST_F(NodeTest, test_check_dt)
 {
+  float prevtime = 1.0f; // 1秒
+  float recvtime = 2.0f; // 2秒
+  float dt = node->check_difftime(recvtime, prevtime);
+  ASSERT_NEAR(dt, 1.0, 1e-2);
   /*
   rclcpp::Time prevtime = node.get_clock()->now();
   rclcpp::Time recvtime = node.get_clock()->now();

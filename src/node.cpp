@@ -80,10 +80,9 @@ void Node::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
   RCLCPP_DEBUG(this->get_logger(), "recvtime_cmdvel update: %f", recvtime_cmdvel.seconds());
 }
 
-// TODO:未テスト
-float Node::check_difftime(rclcpp::Time recvtime, rclcpp::Time prev_recvtime)
+float Node::check_difftime(float current_time, float prev_time)
 {
-  return recvtime.seconds() - prev_recvtime.seconds();
+  return current_time - prev_time;
 }
 
 void Node::control()

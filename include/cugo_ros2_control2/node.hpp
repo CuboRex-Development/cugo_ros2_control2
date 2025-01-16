@@ -16,12 +16,13 @@ public:
   Node();
   //geometry_msgs::msg::Twist last_cmd_vel;
   float check_difftime(float recvtime, float prev_recvtime);
+  bool is_timeout(float recvtime, float prev_recvtime, float timeout_duration);
 
 private:
   void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
   void publish_odom();
   void control();
-  void check_timeouts();
+  void notify_message();
   //void updateDiagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
   void handle_serial_data(std::optional<int32_t> counter);
   void timer_loop();

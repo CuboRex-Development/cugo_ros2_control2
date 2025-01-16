@@ -64,7 +64,7 @@ Node::Node()
   // タイムアウトをチェック（1Hz）
   check_timeout_timer = this->create_wall_timer(
     std::chrono::milliseconds(1000),
-    std::bind(&Node::check_timeouts, this)
+    std::bind(&Node::notify_message, this)
   );
 
 }
@@ -80,6 +80,11 @@ void Node::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
   RCLCPP_DEBUG(this->get_logger(), "recvtime_cmdvel update: %f", recvtime_cmdvel.seconds());
 }
 
+bool Node::is_timeout(float current_time, float prev_time, float timeout_duration)
+{
+  return check_difftime(current_time, prev_time) >= timeout_duration;
+}
+
 float Node::check_difftime(float current_time, float prev_time)
 {
   return current_time - prev_time;
@@ -90,7 +95,7 @@ void Node::control()
   RCLCPP_DEBUG(this->get_logger(), "10Hz Job");
 }
 
-void Node::check_timeouts()
+void Node::notify_message()
 {
   RCLCPP_DEBUG(this->get_logger(), "1Hz Job");
 }

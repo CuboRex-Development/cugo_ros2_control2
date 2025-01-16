@@ -40,13 +40,38 @@ protected:
 // cmdvelのタイムアウト算出
 TEST_F(NodeTest, test_check_dt)
 {
-  float prevtime = 1.0f; // 1秒
-  float recvtime = 2.0f; // 2秒
-  float dt = node->check_difftime(recvtime, prevtime);
-  ASSERT_NEAR(dt, 1.0, 1e-2);
-  /*
-  rclcpp::Time prevtime = node.get_clock()->now();
-  rclcpp::Time recvtime = node.get_clock()->now();
-  ASSERT_NEAR(node.check_difftime(recvtime, prevtime), 0.0, 1e-2);
-  */
+  float prevtime = 1.0f;
+  float recvtime = 2.0f;
+  ASSERT_NEAR(node->check_difftime(recvtime, prevtime), 1.0, 1e-2);
+
+  prevtime = 1.0f;
+  recvtime = 1.0f;
+  ASSERT_NEAR(node->check_difftime(recvtime, prevtime), 0.0, 1e-2);
+
+  prevtime = 1.0f;
+  recvtime = 0.0f;
+  ASSERT_NEAR(node->check_difftime(recvtime, prevtime), -1.0, 1e-2);
+}
+
+// タイムアウト検出が正しいかどうか
+TEST_F(NodeTest, test_is_timeout)
+{
+  float prevtime = 0.0f;
+  float recvtime = 0.0f;
+  float timeout = 0.5f;
+  ASSERT_EQ(node->is_timeout(recvtime, prevtime, timeout), false);
+
+  prevtime = 100.0f;
+  recvtime = 101.0f;
+  ASSERT_EQ(node->is_timeout(recvtime, prevtime, timeout), true);
+
+  prevtime = 100.0f;
+  recvtime = 100.5f;
+  ASSERT_EQ(node->is_timeout(recvtime, prevtime, timeout), true);
+
+  prevtime = 100.0f;
+  recvtime = 101.0f;
+  timeout = 2.0f;
+  ASSERT_EQ(node->is_timeout(recvtime, prevtime, timeout), false);
+
 }

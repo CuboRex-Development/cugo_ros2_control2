@@ -15,8 +15,10 @@ class Node : public rclcpp::Node
 public:
   Node();
   //geometry_msgs::msg::Twist last_cmd_vel;
-  float check_difftime(float recvtime, float prev_recvtime);
-  bool is_timeout(float recvtime, float prev_recvtime, float timeout_duration);
+  double check_difftime(double recvtime, double prev_recvtime);
+  bool is_timeout(double recvtime, double prev_recvtime, double timeout_duration);
+  bool is_sametime(double recvtime, double prev_recvtime);
+  RPM set_zero_rpm();
 
 private:
   void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
@@ -38,15 +40,15 @@ private:
   rclcpp::TimerBase::SharedPtr control_timer;
   rclcpp::TimerBase::SharedPtr check_timeout_timer;
   // launchファイルのパラメータ
-  float control_frequency;
+  double control_frequency;
   //double diagnostic_frequency;
   std::string serial_port;
   int serial_baudrate;
-  float cmd_vel_timeout; // /cmd_velのタイムアウト期間
-  float serial_timeout;  // シリアル通信のタイムアウト期間
-  float tread;
-  float l_wheel_radius, r_wheel_radius;
-  float reduction_ratio;
+  double cmd_vel_timeout; // /cmd_velのタイムアウト期間
+  double serial_timeout;  // シリアル通信のタイムアウト期間
+  double tread;
+  double l_wheel_radius, r_wheel_radius;
+  double reduction_ratio;
   int encoder_resolution;
 
   double linear_x, angular_z;

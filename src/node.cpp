@@ -80,14 +80,30 @@ void Node::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
   RCLCPP_DEBUG(this->get_logger(), "recvtime_cmdvel update: %f", recvtime_cmdvel.seconds());
 }
 
-bool Node::is_timeout(float current_time, float prev_time, float timeout_duration)
+bool Node::is_timeout(double current_time, double prev_time, double timeout_duration)
 {
   return check_difftime(current_time, prev_time) >= timeout_duration;
 }
 
-float Node::check_difftime(float current_time, float prev_time)
+bool Node::is_sametime(double current_time, double prev_time)
+{
+  double dt = check_difftime(current_time, prev_time);
+  RCLCPP_INFO(this->get_logger(), "check_difftime: %lf", dt);
+  // 更新がないかチェック。なければ同じタイムスタンプを見るため完全一致
+  return std::abs(dt) < 1e-6;
+}
+
+double Node::check_difftime(double current_time, double prev_time)
 {
   return current_time - prev_time;
+}
+
+RPM Node::set_zero_rpm()
+{
+  RPM rpm;
+  rpm.l_rpm = 0.0f;
+  rpm.r_rpm = 0.0f;
+  return rpm;
 }
 
 void Node::control()

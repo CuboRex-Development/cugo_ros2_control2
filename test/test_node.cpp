@@ -102,3 +102,26 @@ TEST_F(NodeTest, test_is_sametime)
   recvtime = 66666667.8;
   ASSERT_EQ(node->is_sametime(recvtime, prevtime), false);
 }
+
+TEST_F(NodeTest, test_is_illegaltime)
+{
+  double prevtime = 0.0;
+  double recvtime = 0.0;
+  ASSERT_EQ(node->is_illegaltime(recvtime, prevtime), false);
+
+  prevtime = 0.0;
+  recvtime = 0.1;
+  ASSERT_EQ(node->is_illegaltime(recvtime, prevtime), false);
+
+  prevtime = 10.0;
+  recvtime = 9.9;
+  ASSERT_EQ(node->is_illegaltime(recvtime, prevtime), true);
+
+  prevtime = 66666666.6;
+  recvtime = 66666667.8;
+  ASSERT_EQ(node->is_illegaltime(recvtime, prevtime), false);
+
+  prevtime = 66666667.8;
+  recvtime = 66666666.6;
+  ASSERT_EQ(node->is_illegaltime(recvtime, prevtime), true);
+}

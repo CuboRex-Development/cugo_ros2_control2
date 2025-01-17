@@ -7,6 +7,8 @@ Node::Node()
   RCLCPP_INFO(this->get_logger(), "cugo_ros2_control2 has started.");
 
   // launchファイルからパラメータを取得
+  this->declare_parameter("subscribe_topic_name", "/cmd_vel");
+  this->declare_parameter("publish_topic_name", "/odom");
   this->declare_parameter("control_frequency", 10.0);
   //this->declare_parameter("diagnostic_frequency", 1.0);
   this->declare_parameter("serial_port", "/dev/ttyACM0");
@@ -19,6 +21,8 @@ Node::Node()
   this->declare_parameter("reduction_ratio", 20.0);
   this->declare_parameter("encoder_resolution", 30);
 
+  this->get_parameter("subscribe_topic_name", subscribe_topic_name);
+  this->get_parameter("publish_topic_name", publish_topic_name);
   this->get_parameter("control_frequency", control_frequency);
   //this->get_parameter("diagnostic_frequency", diagnostic_frequency);
   this->get_parameter("serial_port", serial_port);
@@ -32,6 +36,8 @@ Node::Node()
   this->get_parameter("encoder_resolution", encoder_resolution);
 
   RCLCPP_INFO(this->get_logger(), "設定パラメータ");
+  RCLCPP_INFO(this->get_logger(), "subscribe_topic_name: %s", subscribe_topic_name.c_str());
+  RCLCPP_INFO(this->get_logger(), "publish_topic_name: %s", publish_topic_name.c_str());
   RCLCPP_INFO(this->get_logger(), "control_frequency: %f", control_frequency);
   //RCLCPP_INFO(this->get_logger(), "diagnostic_frequency: %f", diagnostic_frequency);
   RCLCPP_INFO(this->get_logger(), "serial_port: %s", serial_port.c_str());
@@ -88,9 +94,13 @@ bool Node::is_timeout(double current_time, double prev_time, double timeout_dura
 bool Node::is_sametime(double current_time, double prev_time)
 {
   double dt = check_difftime(current_time, prev_time);
-  RCLCPP_INFO(this->get_logger(), "check_difftime: %lf", dt);
   // 更新がないかチェック。なければ同じタイムスタンプを見るため完全一致
   return std::abs(dt) < 1e-6;
+}
+
+bool Node::is_illegaltime(double current_time, double prev_time)
+{
+  return check_difftime(current_time, prev_time) < 0.0;
 }
 
 double Node::check_difftime(double current_time, double prev_time)

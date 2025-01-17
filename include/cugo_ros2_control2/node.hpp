@@ -18,6 +18,7 @@ public:
   double check_difftime(double recvtime, double prev_recvtime);
   bool is_timeout(double recvtime, double prev_recvtime, double timeout_duration);
   bool is_sametime(double recvtime, double prev_recvtime);
+  bool is_illegaltime(double recvtime, double prev_recvtime);
   RPM set_zero_rpm();
 
 private:
@@ -39,7 +40,10 @@ private:
   // タイマーコールバック
   rclcpp::TimerBase::SharedPtr control_timer;
   rclcpp::TimerBase::SharedPtr check_timeout_timer;
+
   // launchファイルのパラメータ
+  std::string subscribe_topic_name;
+  std::string publish_topic_name;
   double control_frequency;
   //double diagnostic_frequency;
   std::string serial_port;

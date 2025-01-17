@@ -112,7 +112,7 @@ if(BUILD_TESTING)
 
   # serail.cppのテスト
   ament_add_gtest(test_serial test/test_serial.cpp)
-  target_link_libraries(test_serial serial_lib)
+  target_link_libraries(test_serial serial_lib ${Boost_LIBRARIES})
   ament_target_dependencies(test_serial
     rclcpp
     std_msgs

@@ -3,6 +3,9 @@
 
 #include <string>
 
+namespace cugo_ros2_control2
+{
+
 class Serial
 {
 public:
@@ -19,4 +22,6 @@ public:
   std::string int_to_bin(int value);
   int calc_checksum(const std::string & data);
 };
+
+} // namespace cugo_ros2_control2
 #endif  // CUGO_ROS2_CONTROL2_SERIAL_HPP

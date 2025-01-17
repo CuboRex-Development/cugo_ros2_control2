@@ -53,13 +53,13 @@ Node::Node()
   CuGo cugo{l_wheel_radius, r_wheel_radius, tread, reduction_ratio, encoder_resolution};
   //Serial serial{hoge,piyo,fuga};
 
-  // TODO: topic名を変更
+  // TODO: topic名を変更テスト未
   cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(
-    "/cmd_vel", 10,
+    subscribe_topic_name,  10,
     std::bind(&Node::cmd_vel_callback, this, std::placeholders::_1));
 
-  // TODO: topic名を変更
-  odom_pub = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+  // TODO: topic名を変更テスト未
+  odom_pub = this->create_publisher<nav_msgs::msg::Odometry>(publish_topic_name, 10);
 
   // メインループ
   control_timer = this->create_wall_timer(
@@ -67,7 +67,7 @@ Node::Node()
     std::bind(&Node::control, this)
   );
 
-  // タイムアウトをチェック（1Hz）
+  // 失敗フラグがあれば1秒おきに通知
   check_timeout_timer = this->create_wall_timer(
     std::chrono::milliseconds(1000),
     std::bind(&Node::notify_message, this)
@@ -125,16 +125,3 @@ void Node::notify_message()
 {
   RCLCPP_DEBUG(this->get_logger(), "1Hz Job");
 }
-
-/*
-int main(int argc, char * argv[])
-{
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<cugo_ros2_control2::Node>();
-  rclcpp::executors::MultiThreadedExecutor executor; // Note:シリアル通信の受信でマルチスレッド
-  executor.add_node(node);
-  RCLCPP_INFO(node->get_logger(), "Cugo ROS 2 Control Node has started.");
-  executor.spin();
-  return 0;
-}
-*/

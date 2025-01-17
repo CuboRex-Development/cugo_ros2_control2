@@ -15,8 +15,20 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(diagnostic_updater REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system thread)
 
-# 実行ファイルの作成
+if(NOT Boost_FOUND)
+  message(FATAL_ERROR "Boost libraries not found")
+  message(STATUS "Please install with the following command.")
+  message(STATUS "sudo apt install libboost-all-dev")
+endif()
+
+# インクルードディレクトリの追加
+include_directories(
+  include
+  ${Boost_INCLUDE_DIRS}
+)
+
 add_library(cugo_lib src/cugo.cpp)
 ament_target_dependencies(cugo_lib
   rclcpp
@@ -26,18 +38,18 @@ ament_target_dependencies(cugo_lib
   diagnostic_updater
 )
 
-#add_library(serial_lib src/serial.cpp)
-#ament_target_dependencies(serial_lib
-#  rclcpp
-#  std_msgs
-#  nav_msgs
-#  geometry_msgs
-#  diagnostic_updater
-#)
+add_library(serial_lib src/serial.cpp)
+target_link_libraries(serial_lib ${Boost_LIBRARIES})
+ament_target_dependencies(serial_lib
+  rclcpp
+  std_msgs
+  nav_msgs
+  geometry_msgs
+  diagnostic_updater
+)
 
 add_library(node_lib src/node.cpp)
-target_link_libraries(node_lib cugo_lib)
-#target_link_libraries(node_lib cugo_lib serial_lib)
+target_link_libraries(node_lib cugo_lib serial_lib)
 ament_target_dependencies(node_lib
   rclcpp
   std_msgs
@@ -47,7 +59,7 @@ ament_target_dependencies(node_lib
 )
 
 add_executable(cugo_ros2_control2 src/main.cpp)
-target_link_libraries(cugo_ros2_control2 cugo_lib node_lib)
+target_link_libraries(cugo_ros2_control2 cugo_lib node_lib serial_lib ${Boost_LIBRARIES})
 ament_target_dependencies(
   cugo_ros2_control2
   rclcpp
@@ -55,11 +67,6 @@ ament_target_dependencies(
   nav_msgs
   geometry_msgs
   diagnostic_updater
-)
-
-# インクルードディレクトリの追加
-include_directories(
-  include
 )
 
 target_compile_features(cugo_ros2_control2 PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
@@ -103,6 +110,16 @@ if(BUILD_TESTING)
     diagnostic_updater
   )
 
+  # serail.cppのテスト
+  ament_add_gtest(test_serial test/test_serial.cpp)
+  target_link_libraries(test_serial serial_lib)
+  ament_target_dependencies(test_serial
+    rclcpp
+    std_msgs
+    nav_msgs
+    geometry_msgs
+    diagnostic_updater
+  )
 endif()
 
 ament_package()

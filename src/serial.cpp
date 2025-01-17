@@ -1,12 +1,37 @@
 #include "cugo_ros2_control2/serial.hpp"
 
-Serial::Serial(const std::string & port, int baudrate) {}
+using namespace cugo_ros2_control2;
 
-void Serial::open() {}
-void Serial::close() {}
-std::string Serial::read() {return "";}
-void Serial::write(const std::string & data) {}
-std::string Serial::encode(const std::string & data) {return data;}
+Serial::Serial(const std::string & port, int baudrate)
+{
+
+}
+
+void Serial::open()
+{
+
+}
+
+void Serial::close()
+{
+
+}
+
+std::string Serial::read()
+{
+  return "";
+}
+
+void Serial::write(const std::string & data)
+{
+
+}
+
+std::string Serial::encode(const std::string & data)
+{
+  return data;
+}
+
 std::string Serial::decode(const std::string & data) {return data;}
 float Serial::bin_to_float(const std::string & data) {return 0.0f;}
 int Serial::bin_to_int(const std::string & data) {return 0;}

@@ -15,6 +15,8 @@ def generate_launch_description():
 
     # パラメータの定義
     parameters = {
+        'subscribe_topic_name': '/cmd_vel'
+        'publish_topic_name': '/odom'
         'control_frequency': 10.0,  # MAX:100.0
         # 'diagnostic_frequency': 1.0,
         'serial_port': '/dev/ttyACM0',

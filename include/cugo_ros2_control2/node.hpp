@@ -38,6 +38,8 @@ private:
   rclcpp::TimerBase::SharedPtr control_timer;
   rclcpp::TimerBase::SharedPtr check_timeout_timer;
   // launchファイルのパラメータ
+  std::string subscribe_topic_name;
+  std::string publish_topic_name;
   float control_frequency;
   //double diagnostic_frequency;
   std::string serial_port;

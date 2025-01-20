@@ -7,6 +7,8 @@ Node::Node()
   RCLCPP_INFO(this->get_logger(), "cugo_ros2_control2 has started.");
 
   // launchファイルからパラメータを取得
+  this->declare_parameter("subscribe_topic_name", "/cmd_vel");
+  this->declare_parameter("publish_topic_name", "/odom");
   this->declare_parameter("control_frequency", 10.0);
   //this->declare_parameter("diagnostic_frequency", 1.0);
   this->declare_parameter("serial_port", "/dev/ttyACM0");
@@ -19,6 +21,8 @@ Node::Node()
   this->declare_parameter("reduction_ratio", 20.0);
   this->declare_parameter("encoder_resolution", 30);
 
+  this->get_parameter("subscribe_topic_name", subscribe_topic_name);
+  this->get_parameter("publish_topic_name", publish_topic_name);
   this->get_parameter("control_frequency", control_frequency);
   //this->get_parameter("diagnostic_frequency", diagnostic_frequency);
   this->get_parameter("serial_port", serial_port);
@@ -32,6 +36,8 @@ Node::Node()
   this->get_parameter("encoder_resolution", encoder_resolution);
 
   RCLCPP_INFO(this->get_logger(), "設定パラメータ");
+  RCLCPP_INFO(this->get_logger(), "subscribe_topic_name: %s", subscribe_topic_name.c_str());
+  RCLCPP_INFO(this->get_logger(), "publish_topic_name: %s", publish_topic_name.c_str());
   RCLCPP_INFO(this->get_logger(), "control_frequency: %f", control_frequency);
   //RCLCPP_INFO(this->get_logger(), "diagnostic_frequency: %f", diagnostic_frequency);
   RCLCPP_INFO(this->get_logger(), "serial_port: %s", serial_port.c_str());
@@ -49,11 +55,11 @@ Node::Node()
 
   // TODO: topic名を変更
   cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(
-    "/cmd_vel", 10,
+    subscribe_topic_name.c_str(), 10,
     std::bind(&Node::cmd_vel_callback, this, std::placeholders::_1));
 
   // TODO: topic名を変更
-  odom_pub = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+  odom_pub = this->create_publisher<nav_msgs::msg::Odometry>(publish_topic_name.c_str(), 10);
 
   // メインループ
   control_timer = this->create_wall_timer(

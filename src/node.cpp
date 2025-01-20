@@ -1,3 +1,19 @@
+/*
+   Copyright [2025] [CuboRex Co.,Ltd.]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 #include "cugo_ros2_control2/node.hpp"
 
 using namespace cugo_ros2_control2;
@@ -53,7 +69,7 @@ Node::Node()
   CuGo cugo{l_wheel_radius, r_wheel_radius, tread, reduction_ratio, encoder_resolution};
   //Serial serial{hoge,piyo,fuga};
 
-  // TODO: topic名を変更
+  // TODO: topic名を変更テスト未
   cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(
     subscribe_topic_name.c_str(), 10,
     std::bind(&Node::cmd_vel_callback, this, std::placeholders::_1));
@@ -67,7 +83,7 @@ Node::Node()
     std::bind(&Node::control, this)
   );
 
-  // タイムアウトをチェック（1Hz）
+  // 失敗フラグがあれば1秒おきに通知
   check_timeout_timer = this->create_wall_timer(
     std::chrono::milliseconds(1000),
     std::bind(&Node::notify_message, this)
@@ -86,14 +102,34 @@ void Node::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
   RCLCPP_DEBUG(this->get_logger(), "recvtime_cmdvel update: %f", recvtime_cmdvel.seconds());
 }
 
-bool Node::is_timeout(float current_time, float prev_time, float timeout_duration)
+bool Node::is_timeout(double current_time, double prev_time, double timeout_duration)
 {
   return check_difftime(current_time, prev_time) >= timeout_duration;
 }
 
-float Node::check_difftime(float current_time, float prev_time)
+bool Node::is_sametime(double current_time, double prev_time)
+{
+  double dt = check_difftime(current_time, prev_time);
+  // 更新がないかチェック。なければ同じタイムスタンプを見るため完全一致
+  return std::abs(dt) < 1e-6;
+}
+
+bool Node::is_illegaltime(double current_time, double prev_time)
+{
+  return check_difftime(current_time, prev_time) < 0.0;
+}
+
+double Node::check_difftime(double current_time, double prev_time)
 {
   return current_time - prev_time;
+}
+
+RPM Node::set_zero_rpm()
+{
+  RPM rpm;
+  rpm.l_rpm = 0.0f;
+  rpm.r_rpm = 0.0f;
+  return rpm;
 }
 
 void Node::control()
@@ -105,16 +141,3 @@ void Node::notify_message()
 {
   RCLCPP_DEBUG(this->get_logger(), "1Hz Job");
 }
-
-/*
-int main(int argc, char * argv[])
-{
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<cugo_ros2_control2::Node>();
-  rclcpp::executors::MultiThreadedExecutor executor; // Note:シリアル通信の受信でマルチスレッド
-  executor.add_node(node);
-  RCLCPP_INFO(node->get_logger(), "Cugo ROS 2 Control Node has started.");
-  executor.spin();
-  return 0;
-}
-*/

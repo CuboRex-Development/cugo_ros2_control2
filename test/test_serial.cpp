@@ -53,11 +53,25 @@ TEST_F(CuGoTest, test_open)
   EXPECT_TRUE(test_serial->serial_port_.is_open());
 
   // 存在しないポートを開こうとすると例外を投げるテスト
-  // TODO:一回クローズして存在しないポートで開く
-  /*
+  test_serial->close();
   EXPECT_THROW(
   {
     test_serial->open("/dev/null", 115200);
   }, boost::system::system_error);
-  */
+}
+
+TEST_F(CuGoTest, test_close)
+{
+  // ポートを開いてから閉じるテスト
+  EXPECT_NO_THROW(
+  {
+    test_serial->open("/dev/ttyACM0", 115200);
+  });
+  EXPECT_TRUE(test_serial->serial_port_.is_open());
+
+  EXPECT_NO_THROW(
+  {
+    test_serial->close();
+  });
+  EXPECT_FALSE(test_serial->serial_port_.is_open());
 }

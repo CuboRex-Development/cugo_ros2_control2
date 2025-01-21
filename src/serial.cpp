@@ -65,7 +65,16 @@ void Serial::open(const std::string & port, int baudrate)
 
 void Serial::close()
 {
+  if (serial_port_.is_open()) {
+    try {
+      serial_port_.close();
+      std::cout << "Serial port closed." << std::endl;
+    } catch (const boost::system::system_error & e) {
+      std::cerr << "Error closing serial port: " << e.what() << std::endl;
+    }
+  }
 
+  io_service_.stop();
 }
 
 std::string Serial::read()

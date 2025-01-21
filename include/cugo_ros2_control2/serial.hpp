@@ -21,7 +21,7 @@
 #include <boost/bind/bind.hpp>
 #include <iostream>
 #include <algorithm>
-#include "cugo_ros2_control2/COBS.h"
+//#include "cugo_ros2_control2/COBS.h"
 
 namespace cugo_ros2_control2
 {

@@ -16,6 +16,14 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
+#find_package(ament_cppcheck REQUIRED)
+
+#ament_cppcheck(
+#  cppcheck_config_file "${CMAKE_CURRENT_SOURCE_DIR}/cppcheck.cfg"
+#  build_directory "${CMAKE_CURRENT_BINARY_DIR}/cppcheck"
+#  include_directories "${CMAKE_CURRENT_SOURCE_DIR}/include"
+#  src_directory "${CMAKE_CURRENT_SOURCE_DIR}/src"
+#)
 
 if(NOT Boost_FOUND)
   message(FATAL_ERROR "Boost libraries not found")
@@ -87,6 +95,14 @@ if(BUILD_TESTING)
   set(ament_cmake_copyright_FOUND TRUE)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_cppcheck REQUIRED)
+  #ament_cppcheck(
+  #  cppcheck_config_file "${CMAKE_CURRENT_SOURCE_DIR}/cppcheck_suppressions.txt"
+  #  build_directory "${CMAKE_CURRENT_BINARY_DIR}/cppcheck"
+  #  include_directories "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  #  src_directory "${CMAKE_CURRENT_SOURCE_DIR}/src"
+  #)
 
   # node.cppのテスト
   ament_add_gtest(test_node test/test_node.cpp src/node.cpp)

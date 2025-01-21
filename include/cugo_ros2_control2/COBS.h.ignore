@@ -1,5 +1,4 @@
-// include/cugo_ros2_control2/COBS.h
-
+// cppcheck-suppress all
 #pragma once
 
 /*

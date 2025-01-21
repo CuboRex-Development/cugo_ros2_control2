@@ -16,14 +16,6 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
-#find_package(ament_cppcheck REQUIRED)
-
-#ament_cppcheck(
-#  cppcheck_config_file "${CMAKE_CURRENT_SOURCE_DIR}/cppcheck.cfg"
-#  build_directory "${CMAKE_CURRENT_BINARY_DIR}/cppcheck"
-#  include_directories "${CMAKE_CURRENT_SOURCE_DIR}/include"
-#  src_directory "${CMAKE_CURRENT_SOURCE_DIR}/src"
-#)
 
 if(NOT Boost_FOUND)
   message(FATAL_ERROR "Boost libraries not found")
@@ -77,7 +69,7 @@ ament_target_dependencies(
   diagnostic_updater
 )
 
-target_compile_features(cugo_ros2_control2 PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_compile_features(cugo_ros2_control2 PUBLIC cxx_std_17)
 
 install(TARGETS cugo_ros2_control2
   DESTINATION lib/${PROJECT_NAME}
@@ -96,17 +88,9 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 
-  find_package(ament_cmake_cppcheck REQUIRED)
-  #ament_cppcheck(
-  #  cppcheck_config_file "${CMAKE_CURRENT_SOURCE_DIR}/cppcheck_suppressions.txt"
-  #  build_directory "${CMAKE_CURRENT_BINARY_DIR}/cppcheck"
-  #  include_directories "${CMAKE_CURRENT_SOURCE_DIR}/include"
-  #  src_directory "${CMAKE_CURRENT_SOURCE_DIR}/src"
-  #)
-
   # node.cppのテスト
   ament_add_gtest(test_node test/test_node.cpp src/node.cpp)
-  target_link_libraries(test_node cugo_lib)
+  target_link_libraries(test_node cugo_lib serial_lib)
   ament_target_dependencies(test_node
     rclcpp
     std_msgs
@@ -118,7 +102,7 @@ if(BUILD_TESTING)
   # cugo.cppのテスト
   ament_add_gtest(test_cugo test/test_cugo.cpp)
   target_link_libraries(test_cugo cugo_lib)
-  ament_target_dependencies(test_node
+  ament_target_dependencies(test_cugo
     rclcpp
     std_msgs
     nav_msgs
@@ -126,7 +110,7 @@ if(BUILD_TESTING)
     diagnostic_updater
   )
 
-  # serail.cppのテスト
+  # serial.cppのテスト
   ament_add_gtest(test_serial test/test_serial.cpp)
   target_link_libraries(test_serial serial_lib ${Boost_LIBRARIES})
   ament_target_dependencies(test_serial

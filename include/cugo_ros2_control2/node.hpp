@@ -14,14 +14,15 @@
    limitations under the License.
 */
 
-#ifndef CUGO_ROS2_CONTROL2_HPP
-#define CUGO_ROS2_CONTROL2_HPP
+#ifndef CUGO_ROS2_CONTROL2_NODE_HPP
+#define CUGO_ROS2_CONTROL2_NODE_HPP
 
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include "cugo_ros2_control2/cugo.hpp"
+#include "cugo_ros2_control2/serial.hpp"
 
 namespace cugo_ros2_control2
 {
@@ -53,6 +54,9 @@ private:
   rclcpp::TimerBase::SharedPtr timeout_timer;
   //diagnostic_updater::Updater diagnostic_updater;
 
+  // インスタンス
+  std::shared_ptr<Serial> serial;
+
   // タイマーコールバック
   rclcpp::TimerBase::SharedPtr control_timer;
   rclcpp::TimerBase::SharedPtr check_timeout_timer;
@@ -81,4 +85,4 @@ private:
 };
 
 } // namespace cugo_ros2_control2
-#endif  // CUGO_ROS2_CONTROL2_HPP_
+#endif  // CUGO_ROS2_CONTROL2_NODE_HPP

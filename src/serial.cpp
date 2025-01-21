@@ -19,8 +19,18 @@
 using namespace cugo_ros2_control2;
 
 Serial::Serial(const std::string & port, int baudrate)
+: serial_port_(io_service_)
 {
+  (void)port;
+  (void)baudrate;
+}
 
+Serial::~Serial()
+{
+  close();
+  if (io_thread_.joinable()) {
+    io_thread_.join();
+  }
 }
 
 void Serial::open()

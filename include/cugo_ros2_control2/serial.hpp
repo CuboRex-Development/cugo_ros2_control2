@@ -21,6 +21,10 @@
 #include <boost/bind/bind.hpp>
 #include <iostream>
 #include <algorithm>
+#include <functional>
+#include <vector>
+#include <thread>
+#include <array>
 //#include "cugo_ros2_control2/COBS.h"
 
 namespace cugo_ros2_control2
@@ -29,7 +33,11 @@ namespace cugo_ros2_control2
 class Serial
 {
 public:
+  // コールバック関数の型エイリアス
+  using DataCallback = std::function<void (const std::vector<uint8_t> &)>;
+
   Serial(const std::string & port, int baudrate);
+  ~Serial();
   void open();
   void close();
   std::string read();
@@ -41,6 +49,14 @@ public:
   std::string float_to_bin(float value);
   std::string int_to_bin(int value);
   int calc_checksum(const std::string & data);
+
+private:
+  boost::asio::io_service io_service_;
+  boost::asio::serial_port serial_port_;
+  std::thread io_thread_;
+  std::array<uint8_t, 256> read_buffer_;
+  std::vector<uint8_t> read_data_;
+  DataCallback data_callback_;
 };
 
 } // namespace cugo_ros2_control2

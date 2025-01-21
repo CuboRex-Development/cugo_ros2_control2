@@ -15,6 +15,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "cugo_ros2_control2/node.hpp"
 #include "cugo_ros2_control2/serial.hpp"
 
 using namespace cugo_ros2_control2;
@@ -25,121 +26,38 @@ class CuGoTest : public ::testing::Test
 protected:
   void SetUp() override
   {
-    // 必要に応じて初期化
+    // テスト用のSerialインスタンスを初期化
+    test_serial = std::make_shared<Serial>("/dev/ttyACM0", 115200);
   }
 
   void TearDown() override
   {
-    // 必要に応じてクリーンアップ
+    // クリーンアップ
+    if (test_serial && test_serial->serial_port_.is_open()) {
+      test_serial->close();
+    }
   }
 
-  // デフォルトコンストラクタで初期化された Serialインスタンス
-  Serial serial;
+  std::shared_ptr<Serial> test_serial;
+  //std::shared_ptr<Serial> open_failed_serial;
 };
 
-/*
-// 初期化パラメータなど固定なものの代入が正しいか
-TEST_F(CuGoTest, test_initialize)
+// USBとRaspberryPiPicoを接続してcolcon build / colcon testすること
+TEST_F(CuGoTest, test_open)
 {
-  ASSERT_EQ(cugo_default.get_tread(), 0.376f);
-  ASSERT_EQ(cugo_default.get_l_wheel_radius(), 0.03858f);
-  ASSERT_EQ(cugo_default.get_r_wheel_radius(), 0.03858f);
-  ASSERT_EQ(cugo_custom.get_tread(), 0.8f);
-  ASSERT_EQ(cugo_custom.get_l_wheel_radius(), 0.044f);
-  ASSERT_EQ(cugo_custom.get_r_wheel_radius(), 0.045f);
-  ASSERT_EQ(cugo_custom.get_reduction_ratio(), 10.0f);
-  ASSERT_EQ(cugo_custom.get_encoder_resolution(), 160);
+  // シリアルポートを開くテスト
+  EXPECT_NO_THROW(
+  {
+    test_serial->open("/dev/ttyACM0", 115200);
+  });
+  EXPECT_TRUE(test_serial->serial_port_.is_open());
+
+  // 存在しないポートを開こうとすると例外を投げるテスト
+  // TODO:一回クローズして存在しないポートで開く
+  /*
+  EXPECT_THROW(
+  {
+    test_serial->open("/dev/null", 115200);
+  }, boost::system::system_error);
+  */
 }
-
-// calc_rpm()の出力値テスト
-TEST_F(CuGoTest, test_calc_rpm)
-{
-  // 速度0入力
-  float linear_x = 0.0f;
-  float angular_z = 0.0f;
-  RPM rpm = cugo_default.calc_rpm(linear_x, angular_z);
-  ASSERT_EQ(rpm.l_rpm, 0.0f);
-  ASSERT_EQ(rpm.r_rpm, 0.0f);
-
-  // 前後進のみ入力
-  linear_x = 0.5f;
-  angular_z = 0.0f;
-  rpm = cugo_default.calc_rpm(linear_x, angular_z);
-  ASSERT_NEAR(rpm.l_rpm, 123.7596758f, 1e-2);
-  ASSERT_NEAR(rpm.r_rpm, 123.7596758f, 1e-2);
-
-  // 回転のみ入力
-  linear_x = -0.5f;
-  angular_z = 0.0f;
-  rpm = cugo_default.calc_rpm(linear_x, angular_z);
-  ASSERT_NEAR(rpm.l_rpm, -123.7596758f, 1e-2);
-  ASSERT_NEAR(rpm.r_rpm, -123.7596758f, 1e-2);
-
-  // 曲がりながら走行するベクトルを入力
-  linear_x = 0.5f;
-  angular_z = 1.0f;
-  rpm = cugo_default.calc_rpm(linear_x, angular_z);
-  ASSERT_NEAR(rpm.l_rpm, 77.22603771f, 1e-2);
-  ASSERT_NEAR(rpm.r_rpm, 170.2933139f, 1e-2);
-}
-
-// エンコーダカウントから計算するtwistが正しいか
-TEST_F(CuGoTest, test_calc_twist)
-{
-  Twist twist;
-  twist = cugo_default.calc_twist(0, 0, 0.1);
-  ASSERT_NEAR(twist.linear_x, 0.0, 1e-4);
-  ASSERT_NEAR(twist.angular_z, 0.0, 1e-4);
-
-  twist = cugo_default.calc_twist(100, 100, 0.1);
-  ASSERT_NEAR(twist.linear_x, 0.03366740127, 1e-4);
-  ASSERT_NEAR(twist.angular_z, 0.0, 1e-4);
-
-  twist = cugo_default.calc_twist(100, -100, 0.1);
-  ASSERT_NEAR(twist.linear_x, 0.0, 1e-4);
-  ASSERT_NEAR(twist.angular_z, -0.1790819217, 1e-4);
-
-  twist = cugo_default.calc_twist(200, 100, 0.1);
-  ASSERT_NEAR(twist.linear_x, 0.0505011019, 1e-4);
-  ASSERT_NEAR(twist.angular_z, -0.08954096082, 1e-4);
-}
-
-// twistの累積が正しいかどうか
-TEST_F(CuGoTest, test_calc_odom)
-{
-  Odom odom;
-  odom.x = 0.0;
-  odom.y = 0.0;
-  odom.yaw = 0.0;
-  Twist twist;
-  twist.linear_x = 0.0;
-  twist.angular_z = 0.0;
-  float dt = 0.1;
-
-  odom = cugo_default.calc_odom(odom, twist, dt);
-  ASSERT_NEAR(odom.x, 0.0, 1e-4);
-  ASSERT_NEAR(odom.y, 0.0, 1e-4);
-  ASSERT_NEAR(odom.yaw, 0.0, 1e-4);
-
-  twist.linear_x = 0.5;
-  twist.angular_z = 0.0;
-  odom = cugo_default.calc_odom(odom, twist, dt);
-  ASSERT_NEAR(odom.x, 0.05, 1e-4);
-  ASSERT_NEAR(odom.y, 0.0, 1e-4);
-  ASSERT_NEAR(odom.yaw, 0.0, 1e-4);
-
-  twist.linear_x = 0.3;
-  twist.angular_z = 1.57;
-  odom = cugo_default.calc_odom(odom, twist, dt);
-  ASSERT_NEAR(odom.x, 0.07963102384, 1e-4);
-  ASSERT_NEAR(odom.y, 0.004690674368, 1e-4);
-  ASSERT_NEAR(odom.yaw, 0.157, 1e-4);
-
-  twist.linear_x = 0.5;
-  twist.angular_z = -3.14;
-  odom = cugo_default.calc_odom(odom, twist, dt);
-  ASSERT_NEAR(odom.x, 0.1290160636, 1e-4);
-  ASSERT_NEAR(odom.y, -0.003127116246, 1e-4);
-  ASSERT_NEAR(odom.yaw, -0.157, 1e-4);
-}
-*/

@@ -21,8 +21,7 @@ using namespace cugo_ros2_control2;
 Serial::Serial(const std::string & port, int baudrate)
 : serial_port_(io_service_)
 {
-  (void)port;
-  (void)baudrate;
+  open(port, baudrate);
 }
 
 Serial::~Serial()
@@ -33,8 +32,34 @@ Serial::~Serial()
   }
 }
 
-void Serial::open()
+void Serial::open(const std::string & port, int baudrate)
 {
+  if (serial_port_.is_open()) {
+    std::cerr << "Serial port already open." << std::endl;
+    return;
+  }
+
+  try {
+    serial_port_.open(port);
+    serial_port_.set_option(
+      boost::asio::serial_port_base::baud_rate(baudrate));
+    serial_port_.set_option(
+      boost::asio::serial_port_base::character_size(8));
+    serial_port_.set_option(
+      boost::asio::serial_port_base::parity(
+        boost::asio::serial_port_base::parity::none));
+    serial_port_.set_option(
+      boost::asio::serial_port_base::stop_bits(
+        boost::asio::serial_port_base::stop_bits::one));
+    serial_port_.set_option(
+      boost::asio::serial_port_base::flow_control(
+        boost::asio::serial_port_base::flow_control::none));
+
+    std::cout << "Serial port " << port << " opened with baudrate " << baudrate << std::endl;
+  } catch (const boost::system::system_error & e) {
+    std::cerr << "Error opening serial port: " << e.what() << std::endl;
+    throw e;
+  }
 
 }
 

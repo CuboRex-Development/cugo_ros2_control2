@@ -38,7 +38,7 @@ public:
 
   Serial(const std::string & port, int baudrate);
   ~Serial();
-  void open();
+  void open(const std::string & port, int baudrate);
   void close();
   std::string read();
   void write(const std::string & data);
@@ -50,13 +50,14 @@ public:
   std::string int_to_bin(int value);
   int calc_checksum(const std::string & data);
 
-private:
   boost::asio::io_service io_service_;
   boost::asio::serial_port serial_port_;
   std::thread io_thread_;
   std::array<uint8_t, 256> read_buffer_;
   std::vector<uint8_t> read_data_;
   DataCallback data_callback_;
+
+private:
 };
 
 } // namespace cugo_ros2_control2

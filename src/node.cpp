@@ -68,7 +68,7 @@ Node::Node()
 
   // TODO: CuGoクラスをスマートポインタに
   CuGo cugo{l_wheel_radius, r_wheel_radius, tread, reduction_ratio, encoder_resolution};
-  serial = std::make_shared<Serial>("/dev/ttyACM0", 115200);
+  serial = std::make_shared<Serial>();
 
   // TODO: topic名を変更テスト未
   cmd_vel_sub = this->create_subscription<geometry_msgs::msg::Twist>(

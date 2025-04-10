@@ -132,15 +132,26 @@ uint16_t Serial::calc_checksum(const unsigned char * body_data, size_t body_size
   }
 
   uint32_t sum = 0;
+  std::cout << "[Serial DEBUG] Data: ";
   for (size_t i = 0; i < body_size; i += 2) {
     uint16_t word =
       (static_cast<uint16_t>(body_data[i + 1]) << 8) | static_cast<uint16_t>(body_data[i]);
+    printf(
+      "  word[%zu]: data[i]=0x%02X, data[i+1]=0x%02X -> word=0x%04X, current sum=0x%08X\n",
+      i / 2, body_data[i], body_data[i + 1], word, sum);
     sum += word;
   }
-  while (sum >> 16) {
+  std::cout << std::endl;
+  printf("[Serial DEBUG] sum (before carry): 0x%08X\n", sum);
+  if (sum >> 16) {
     sum = (sum & 0xFFFF) + (sum >> 16);
   }
-  return static_cast<uint16_t>(~sum);
+  printf("[Serial DEBUG] sum (after carry): 0x%08X\n", sum);
+  uint16_t final_sum_16bit = static_cast<uint16_t>(sum);
+  uint16_t checksum = ~final_sum_16bit;
+  printf("[Serial DEBUG] checksum (16bit): 0x%04X\n", checksum);
+  return checksum;
+  //return static_cast<uint16_t>(~sum);
 }
 
 std::vector<unsigned char> Serial::create_packet(const SendValue & sv) // 仮実装

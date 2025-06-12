@@ -69,10 +69,11 @@ public:
   static uint16_t calc_checksum(const unsigned char * body_data, size_t body_size);
 
   // バイナリ変換
-  float bin_to_float(const std::string & data);
-  int bin_to_int(const std::string & data);
-  std::string float_to_bin(float value);
-  std::string int_to_bin(int value);
+  static std::vector<unsigned char> float_to_bin(float value);
+  static float bin_to_float(const unsigned char * data);
+
+  static int bin_to_int(const std::string & data);
+  static std::string int_to_bin(int value);
 
   // boostライブラリ
   boost::asio::io_service io_service_;

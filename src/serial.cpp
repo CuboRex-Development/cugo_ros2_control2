@@ -267,8 +267,20 @@ std::string Serial::encode(const std::string & data)
 */
 
 //std::string Serial::decode(const std::string & data) {return data;}
-float Serial::bin_to_float(const std::string & data) {return 0.0f;}
 int Serial::bin_to_int(const std::string & data) {return 0;}
-std::string Serial::float_to_bin(float value) {return "";}
 std::string Serial::int_to_bin(int value) {return "";}
+
+std::vector<unsigned char> Serial::float_to_bin(float value)
+{
+  std::vector<unsigned char> bytes(sizeof(float));
+  memcpy(bytes.data(), &value, sizeof(float));
+  return bytes;
+}
+
+float Serial::bin_to_float(const unsigned char * data)
+{
+  float value;
+  memcpy(&value, data, sizeof(float));
+  return value;
+}
 //int Serial::calc_checksum(const std::string & data) {return 0;}

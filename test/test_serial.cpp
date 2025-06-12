@@ -132,6 +132,84 @@ TEST_F(SerialTest, test_calc_checksum_int32)
   EXPECT_EQ(Serial::calc_checksum(body5.data(), body5.size()), 0x87FF);
 }
 
+/* FLOATのバイト列が一致しないため、ラウンドトリップテストに置き換え
+TEST_F(SerialTest, test_float_to_bin)
+{
+    // Serial::float_to_bin が static std::vector<unsigned char> を返すと仮定
+
+    // ケース1: 0.0f
+    float val1 = 0.0f;
+    std::vector<unsigned char> expected1 = {0x00, 0x00, 0x00, 0x00};
+    EXPECT_EQ(Serial::float_to_bin(val1), expected1);
+
+    // ケース2: 正の値
+    float val2 = 123.45f; // 16進数表現: 0x42F6E666
+    std::vector<unsigned char> expected2 = {0x66, 0xE6, 0xF6, 0x42}; // リトルエンディアン
+    EXPECT_EQ(Serial::float_to_bin(val2), expected2);
+
+    // ケース3: 負の値
+    float val3 = -67.89f; // 16進数表現: 0xC287C28F
+    std::vector<unsigned char> expected3 = {0x8F, 0xC2, 0x87, 0xC2}; // リトルエンディアン
+    EXPECT_EQ(Serial::float_to_bin(val3), expected3);
+}
+
+// --- バイナリ変換 bin -> float のテスト ---
+TEST_F(SerialTest, test_bin_to_float)
+{
+    // Serial::bin_to_float が static float を返し、
+    // 引数として const unsigned char* を受け取ると仮定
+
+    // ケース1: 0.0f
+    unsigned char data1[] = {0x00, 0x00, 0x00, 0x00};
+    float expected1 = 0.0f;
+    EXPECT_FLOAT_EQ(Serial::bin_to_float(data1), expected1);
+
+    // ケース2: 正の値
+    unsigned char data2[] = {0x66, 0xE6, 0xF6, 0x42}; // 123.45f (リトルエンディアン)
+    float expected2 = 123.45f;
+    EXPECT_FLOAT_EQ(Serial::bin_to_float(data2), expected2);
+
+    // ケース3: 負の値
+    unsigned char data3[] = {0x8F, 0xC2, 0x87, 0xC2}; // -67.89f (リトルエンディアン)
+    float expected3 = -67.89f;
+    EXPECT_FLOAT_EQ(Serial::bin_to_float(data3), expected3);
+}
+*/
+
+TEST_F(SerialTest, test_float_bin_roundtrip)
+{
+  // テストしたい float 値のリスト
+  std::vector<float> test_values = {
+    0.0f,
+    1.0f,
+    -1.0f,
+    123.45f,
+    -67.89f,
+    std::numeric_limits<float>::max(),
+    -std::numeric_limits<float>::max()
+  };
+
+  for (const auto & original_value : test_values) {
+    // 1. float -> bin
+    std::vector<unsigned char> bytes = Serial::float_to_bin(original_value);
+    // 4バイトのベクトルが生成されることを確認
+    EXPECT_EQ(bytes.size(), sizeof(float));
+
+    // 2. bin -> float
+    float roundtrip_value = Serial::bin_to_float(bytes.data());
+
+    // 3. 元の値と、変換して戻してきた値が一致することを確認
+    // EXPECT_FLOAT_EQ を使って浮動小数点数の誤差を許容して比較
+    EXPECT_FLOAT_EQ(original_value, roundtrip_value);
+
+    // デバッグ用に値を出力 (テストが失敗した場合に役立つ)
+    if (original_value != roundtrip_value) {
+      printf(
+          "Mismatch for value %.8f: bin is [0x%02X, 0x%02X, 0x%02X, 0x%02X], roundtrip is %.8f\n",
+          original_value, bytes[0], bytes[1], bytes[2], bytes[3], roundtrip_value);
+    }
+  }
+}
 
 TEST_F(SerialTest, test_create_packet)
 {

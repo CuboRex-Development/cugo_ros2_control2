@@ -211,6 +211,62 @@ TEST_F(SerialTest, test_float_bin_roundtrip)
   }
 }
 
+TEST_F(SerialTest, test_int32_to_bin)
+{
+    // ケース1: 0
+    int32_t val1 = 0;
+    std::vector<unsigned char> expected1 = {0x00, 0x00, 0x00, 0x00};
+    EXPECT_EQ(Serial::int32_to_bin(val1), expected1);
+
+    // ケース2: 正の値
+    int32_t val2 = 1000; // 16進数: 0x000003E8
+    std::vector<unsigned char> expected2 = {0xE8, 0x03, 0x00, 0x00}; // リトルエンディアン
+    EXPECT_EQ(Serial::int32_to_bin(val2), expected2);
+
+    // ケース3: 負の値
+    int32_t val3 = -2000; // 16進数: 0xFFFFF830
+    std::vector<unsigned char> expected3 = {0x30, 0xF8, 0xFF, 0xFF}; // リトルエンディアン
+    EXPECT_EQ(Serial::int32_to_bin(val3), expected3);
+
+    // ケース4: 境界値 INT32_MAX
+    int32_t val4 = std::numeric_limits<int32_t>::max(); // 0x7FFFFFFF
+    std::vector<unsigned char> expected4 = {0xFF, 0xFF, 0xFF, 0x7F}; // リトルエンディアン
+    EXPECT_EQ(Serial::int32_to_bin(val4), expected4);
+
+    // ケース5: 境界値 INT32_MIN
+    int32_t val5 = std::numeric_limits<int32_t>::min(); // 0x80000000
+    std::vector<unsigned char> expected5 = {0x00, 0x00, 0x00, 0x80}; // リトルエンディアン
+    EXPECT_EQ(Serial::int32_to_bin(val5), expected5);
+}
+
+TEST_F(SerialTest, test_bin_to_int32)
+{
+    // ケース1: 0
+    unsigned char data1[] = {0x00, 0x00, 0x00, 0x00};
+    int32_t expected1 = 0;
+    EXPECT_EQ(Serial::bin_to_int32(data1), expected1);
+
+    // ケース2: 正の値
+    unsigned char data2[] = {0xE8, 0x03, 0x00, 0x00}; // 1000 (リトルエンディアン)
+    int32_t expected2 = 1000;
+    EXPECT_EQ(Serial::bin_to_int32(data2), expected2);
+
+    // ケース3: 負の値
+    unsigned char data3[] = {0x30, 0xF8, 0xFF, 0xFF}; // -2000 (リトルエンディアン)
+    int32_t expected3 = -2000;
+    EXPECT_EQ(Serial::bin_to_int32(data3), expected3);
+
+    // ケース4: 境界値 INT32_MAX
+    unsigned char data4[] = {0xFF, 0xFF, 0xFF, 0x7F}; // 0x7FFFFFFF (リトルエンディアン)
+    int32_t expected4 = std::numeric_limits<int32_t>::max();
+    EXPECT_EQ(Serial::bin_to_int32(data4), expected4);
+
+    // ケース5: 境界値 INT32_MIN
+    unsigned char data5[] = {0x00, 0x00, 0x00, 0x80}; // 0x80000000 (リトルエンディアン)
+    int32_t expected5 = std::numeric_limits<int32_t>::min();
+    EXPECT_EQ(Serial::bin_to_int32(data5), expected5);
+}
+
 TEST_F(SerialTest, test_create_packet)
 {
 

@@ -72,8 +72,8 @@ public:
   static std::vector<unsigned char> float_to_bin(float value);
   static float bin_to_float(const unsigned char * data);
 
-  static int bin_to_int(const std::string & data);
-  static std::string int_to_bin(int value);
+  static std::vector<unsigned char> int32_to_bin(int32_t value);
+  static int32_t bin_to_int32(const unsigned char * data);
 
   // boostライブラリ
   boost::asio::io_service io_service_;

@@ -267,8 +267,7 @@ std::string Serial::encode(const std::string & data)
 */
 
 //std::string Serial::decode(const std::string & data) {return data;}
-int Serial::bin_to_int(const std::string & data) {return 0;}
-std::string Serial::int_to_bin(int value) {return "";}
+//int Serial::calc_checksum(const std::string & data) {return 0;}
 
 std::vector<unsigned char> Serial::float_to_bin(float value)
 {
@@ -283,4 +282,21 @@ float Serial::bin_to_float(const unsigned char * data)
   memcpy(&value, data, sizeof(float));
   return value;
 }
-//int Serial::calc_checksum(const std::string & data) {return 0;}
+
+// int32_t -> bin
+std::vector<unsigned char> Serial::int32_to_bin(int32_t value)
+{
+  std::vector<unsigned char> bytes(sizeof(int32_t)); // 4バイト確保
+  // value のメモリ上の表現を bytes ベクターにコピー
+  memcpy(bytes.data(), &value, sizeof(int32_t));
+  return bytes;
+}
+
+// bin -> int32_t
+int32_t Serial::bin_to_int32(const unsigned char * data)
+{
+  int32_t value;
+  // data が指すメモリから sizeof(int32_t) バイトを value にコピー
+  memcpy(&value, data, sizeof(int32_t));
+  return value;
+}

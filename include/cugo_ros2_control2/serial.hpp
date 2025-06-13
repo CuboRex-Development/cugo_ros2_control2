@@ -64,8 +64,8 @@ public:
 
   // パケット関連メソッド
   static std::vector<unsigned char> create_packet(const SendValue & sv);
-  static std::vector<unsigned char> encode(const std::vector<unsigned char> & packet_data);
-  static std::vector<unsigned char> decode(const std::vector<unsigned char> & received_data);
+  static std::vector<unsigned char> encode(const std::vector<unsigned char> & raw_packet);
+  //static std::vector<unsigned char> decode(const std::vector<unsigned char>& encoded_packet);
   static uint16_t calc_checksum(const unsigned char * body_data, size_t body_size);
 
   // バイナリ変換

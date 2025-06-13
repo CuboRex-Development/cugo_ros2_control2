@@ -132,49 +132,6 @@ TEST_F(SerialTest, test_calc_checksum_int32)
   EXPECT_EQ(Serial::calc_checksum(body5.data(), body5.size()), 0x87FF);
 }
 
-/* FLOATのバイト列が一致しないため、ラウンドトリップテストに置き換え
-TEST_F(SerialTest, test_float_to_bin)
-{
-    // Serial::float_to_bin が static std::vector<unsigned char> を返すと仮定
-
-    // ケース1: 0.0f
-    float val1 = 0.0f;
-    std::vector<unsigned char> expected1 = {0x00, 0x00, 0x00, 0x00};
-    EXPECT_EQ(Serial::float_to_bin(val1), expected1);
-
-    // ケース2: 正の値
-    float val2 = 123.45f; // 16進数表現: 0x42F6E666
-    std::vector<unsigned char> expected2 = {0x66, 0xE6, 0xF6, 0x42}; // リトルエンディアン
-    EXPECT_EQ(Serial::float_to_bin(val2), expected2);
-
-    // ケース3: 負の値
-    float val3 = -67.89f; // 16進数表現: 0xC287C28F
-    std::vector<unsigned char> expected3 = {0x8F, 0xC2, 0x87, 0xC2}; // リトルエンディアン
-    EXPECT_EQ(Serial::float_to_bin(val3), expected3);
-}
-
-// --- バイナリ変換 bin -> float のテスト ---
-TEST_F(SerialTest, test_bin_to_float)
-{
-    // Serial::bin_to_float が static float を返し、
-    // 引数として const unsigned char* を受け取ると仮定
-
-    // ケース1: 0.0f
-    unsigned char data1[] = {0x00, 0x00, 0x00, 0x00};
-    float expected1 = 0.0f;
-    EXPECT_FLOAT_EQ(Serial::bin_to_float(data1), expected1);
-
-    // ケース2: 正の値
-    unsigned char data2[] = {0x66, 0xE6, 0xF6, 0x42}; // 123.45f (リトルエンディアン)
-    float expected2 = 123.45f;
-    EXPECT_FLOAT_EQ(Serial::bin_to_float(data2), expected2);
-
-    // ケース3: 負の値
-    unsigned char data3[] = {0x8F, 0xC2, 0x87, 0xC2}; // -67.89f (リトルエンディアン)
-    float expected3 = -67.89f;
-    EXPECT_FLOAT_EQ(Serial::bin_to_float(data3), expected3);
-}
-*/
 
 TEST_F(SerialTest, test_float_bin_roundtrip)
 {
@@ -267,7 +224,30 @@ TEST_F(SerialTest, test_bin_to_int32)
     EXPECT_EQ(Serial::bin_to_int32(data5), expected5);
 }
 
-TEST_F(SerialTest, test_create_packet)
+TEST_F(SerialTest, test_packetserial_encode)
 {
+  // ケース1: 特殊文字を含まない単純なデータ
+  std::vector<unsigned char> raw1 = {0x01, 0x02, 0x03};
+  std::vector<unsigned char> expected1 = {0x01, 0x02, 0x03, 0xC0};
+  EXPECT_EQ(Serial::encode(raw1), expected1);
 
+  // ケース2: 区切り文字(0xC0)のみを含むデータ
+  std::vector<unsigned char> raw2 = {0xC0};
+  std::vector<unsigned char> expected2 = {0xDB, 0xDC, 0xC0}; // 0xC0 -> 0xDB, 0xDC にエスケープ
+  EXPECT_EQ(Serial::encode(raw2), expected2);
+
+  // ケース3: エスケープ文字(0xDB)のみを含むデータ
+  std::vector<unsigned char> raw3 = {0xDB};
+  std::vector<unsigned char> expected3 = {0xDB, 0xDD, 0xC0}; // 0xDB -> 0xDB, 0xDD にエスケープ
+  EXPECT_EQ(Serial::encode(raw3), expected3);
+
+  // ケース4: 両方の特殊文字を含むデータ
+  std::vector<unsigned char> raw4 = {0x01, 0xC0, 0x02, 0xDB, 0x03};
+  std::vector<unsigned char> expected4 = {0x01, 0xDB, 0xDC, 0x02, 0xDB, 0xDD, 0x03, 0xC0};
+  EXPECT_EQ(Serial::encode(raw4), expected4);
+
+  // ケース5: 空データ
+  std::vector<unsigned char> raw5 = {};
+  std::vector<unsigned char> expected5 = {0xC0}; // 区切り文字のみ
+  EXPECT_EQ(Serial::encode(raw5), expected5);
 }

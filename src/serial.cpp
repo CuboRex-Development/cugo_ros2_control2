@@ -218,35 +218,6 @@ void Serial::handle_read(const boost::system::error_code & error, std::size_t by
   // まずはリンクエラー解消のため、これだけでもOK
 }
 
-/* old 消す
-void Serial::handle_read(const boost::system::error_code & error, std::size_t bytes_transferred)
-{
-  if (!error) {
-    std::istream is(&buffer_);
-    std::string line;
-    std::getline(is, line);
-    std::cout << "Received: " << line << std::endl;
-
-    // 必要に応じてデータコールバックを呼び出す
-    if (data_callback_) {
-      std::vector<uint8_t> data(line.begin(), line.end());
-      data_callback_(data);
-    }
-
-    // 次の読み取りを開始
-    boost::asio::async_read_until(
-      serial_port_, buffer_, '\n',
-      boost::bind(
-        &Serial::handle_read, this,
-        boost::asio::placeholders::error,
-        boost::asio::placeholders::bytes_transferred));
-  } else {
-    std::cerr << "Error in handle_read: " << error.message() << std::endl;
-  }
-}
-*/
-
-
 // 未テスト
 /*
 void Serial::handle_write(const boost::system::error_code & error, std::size_t bytes_transferred)
@@ -259,12 +230,28 @@ void Serial::handle_write(const boost::system::error_code & error, std::size_t b
 }
 */
 
-/*
-std::string Serial::encode(const std::string & data)
+
+std::vector<unsigned char> Serial::encode(const std::vector<unsigned char> & raw_packet)
 {
-  return data;
+  std::vector<unsigned char> encoded;
+
+  for (const auto & byte : raw_packet) {
+    if (byte == 0xC0) {         // 区切り文字 (END)
+      encoded.push_back(0xDB); // エスケープ文字 (ESC)
+      encoded.push_back(0xDC); // ESC_END
+    } else if (byte == 0xDB) {  // エスケープ文字 (ESC)
+      encoded.push_back(0xDB); // エスケープ文字 (ESC)
+      encoded.push_back(0xDD); // ESC_ESC
+    } else {
+      encoded.push_back(byte);
+    }
+  }
+
+  // 末尾に区切り文字を追加
+  encoded.push_back(0xC0);
+
+  return encoded;
 }
-*/
 
 //std::string Serial::decode(const std::string & data) {return data;}
 //int Serial::calc_checksum(const std::string & data) {return 0;}

@@ -253,6 +253,39 @@ std::vector<unsigned char> Serial::encode(const std::vector<unsigned char> & raw
   return encoded;
 }
 
+std::vector<unsigned char> Serial::decode(const std::vector<unsigned char> & encoded_packet)
+{
+  // 入力データの基本的なチェック
+  if (encoded_packet.empty() || encoded_packet.back() != 0xC0) {
+    throw std::runtime_error("Invalid packet: missing END character or empty packet.");
+  }
+
+  std::vector<unsigned char> decoded;
+  // 末尾の区切り文字(0xC0)を除いた範囲をループ
+  for (size_t i = 0; i < encoded_packet.size() - 1; ++i) {
+    if (encoded_packet[i] == 0xDB) { // エスケープ文字
+                                     // 次のバイトをチェックするため、インデックスを一つ進める
+      i++;
+      if (i >= encoded_packet.size() - 1) { // エスケープ文字の直後が終端だった場合
+        throw std::runtime_error("Invalid packet: trailing ESC character.");
+      }
+
+      if (encoded_packet[i] == 0xDC) { // ESC_END
+        decoded.push_back(0xC0);
+      } else if (encoded_packet[i] == 0xDD) { // ESC_ESC
+        decoded.push_back(0xDB);
+      } else {
+        // 不正なエスケープシーケンス
+        throw std::runtime_error("Invalid packet: invalid escape sequence.");
+      }
+    } else {
+      // 通常のデータ
+      decoded.push_back(encoded_packet[i]);
+    }
+  }
+  return decoded;
+}
+
 //std::string Serial::decode(const std::string & data) {return data;}
 //int Serial::calc_checksum(const std::string & data) {return 0;}
 

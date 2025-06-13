@@ -154,48 +154,35 @@ uint16_t Serial::calc_checksum(const unsigned char * body_data, size_t body_size
   //return static_cast<uint16_t>(~sum);
 }
 
-std::vector<unsigned char> Serial::create_packet(const SendValue & sv) // 仮実装
+std::vector<unsigned char> Serial::create_packet(const SendValue & sv)
 {
-  // 仮実装 (または後で実装)
-  std::vector<unsigned char> packet(PACKET_SIZE, 0);
-  // TODO: ヘッダ設定、ボディ設定、チェックサム計算と設定
+  // 72バイトのパケット領域を確保し、0で初期化
+  std::vector<unsigned char> packet(72, 0);
+
+  // --- ボディの作成 ---
+  // ボディ部分へのポインタを取得
+  unsigned char * body_ptr = packet.data() + 8; // ヘッダ(8バイト)の後ろ
+  // RPM値をボディにコピー
+  memcpy(body_ptr + 0, &sv.l_rpm, sizeof(float)); // ボディの0バイト目から
+  memcpy(body_ptr + 4, &sv.r_rpm, sizeof(float)); // ボディの4バイト目から
+  // 残りのボディは0で初期化済み
+
+  // --- ヘッダの作成 ---
+  // ヘッダ部分へのポインタを取得
+  unsigned char * header_ptr = packet.data();
+  uint16_t length = 72;
+  // ヘッダに各値をコピー
+  memcpy(header_ptr + 0, &sv.pc_port, sizeof(uint16_t));
+  memcpy(header_ptr + 2, &sv.mcu_port, sizeof(uint16_t));
+  memcpy(header_ptr + 4, &length, sizeof(uint16_t));
+
+  // ボディデータからチェックサムを計算
+  uint16_t checksum = calc_checksum(body_ptr, 64);
+  // 計算したチェックサムをヘッダにコピー
+  memcpy(header_ptr + 6, &checksum, sizeof(uint16_t));
+
   return packet;
 }
-
-/*
-std::vector<unsigned char> create_packet(const SendValue & sv)
-{
-  // 内部で packet[PACKET_SIZE] の固定長バッファを作成し、
-  // ヘッダー・ボディの各フィールドを memcpy() で設定した上で、
-  // チェックサム計算を行い、生成したパケットを std::vector<unsigned char> として返す
-  unsigned char packet[PACKET_SIZE];
-  std::memset(packet, 0, PACKET_SIZE);
-
-  // ヘッダー作成
-  uint16_t pc_port_net = htons(static_cast<uint16_t>(sv.pc_port));
-  uint16_t mcu_port_net = htons(static_cast<uint16_t>(sv.mcu_port));
-  uint16_t length_net = htons(static_cast<uint16_t>(PACKET_SIZE));
-  uint16_t checksum = 0;
-
-  std::memcpy(packet, &pc_port_net, sizeof(pc_port_net));
-  std::memcpy(packet + 2, &mcu_port_net, sizeof(mcu_port_net));
-  std::memcpy(packet + 4, &length_net, sizeof(length_net));
-  std::memcpy(packet + 6, &checksum, sizeof(checksum)); // 2バイトのchecksumに注意
-
-  // ボディ作成：先頭8バイトに2つのfloat（l_rpm と r_rpm）をセット
-  std::memcpy(packet + PACKET_HEADER_SIZE, &sv.l_rpm, sizeof(float));
-  std::memcpy(packet + PACKET_HEADER_SIZE + 4, &sv.r_rpm, sizeof(float));
-  // （残りは既に0で初期化済み）
-
-  // チェックサム計算（チェックサムフィールドは 0 として計算）
-  //std::string packet_str(reinterpret_cast<char*>(packet), PACKET_SIZE);
-  //checksum = static_cast<uint8_t>(calc_checksum(packet_str));
-  //std::memcpy(packet + 6, &checksum, sizeof(checksum));
-
-  // 生成した固定長バイナリパケットを vector にコピーして返す
-  return std::vector<unsigned char>(packet, packet + PACKET_SIZE);
-}
-*/
 
 // 未テスト
 void Serial::handle_read(const boost::system::error_code & error, std::size_t bytes_transferred)

@@ -34,6 +34,9 @@
 #define PACKET_HEADER_SIZE 8
 #define PACKET_BODY_SIZE 64
 
+namespace cugo_ros2_control2
+{
+
 struct SendValue
 {
   uint16_t pc_port;
@@ -43,8 +46,6 @@ struct SendValue
   // 送信メッセージが増えればここに追加
 };
 
-namespace cugo_ros2_control2
-{
 
 class Serial
 {

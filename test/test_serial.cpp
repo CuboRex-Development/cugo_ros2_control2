@@ -294,3 +294,45 @@ TEST_F(SerialTest, test_packetserial_decode)
     std::vector<unsigned char> invalid_data3 = {};
     ASSERT_THROW(Serial::decode(invalid_data3), std::runtime_error);
 }
+
+TEST_F(SerialTest, test_create_packet)
+{
+  // 1. 送信したいデータを用意
+  cugo_ros2_control2::SendValue sv;
+  sv.pc_port = 8888;
+  sv.mcu_port = 8889;
+  sv.l_rpm = 10.5f;
+  sv.r_rpm = -20.25f;
+
+  // 2. パケットを生成
+  std::vector<unsigned char> packet = Serial::create_packet(sv);
+
+  // 3. 生成されたパケットを検証
+
+  // 3-1. サイズが72バイトであることを確認
+  ASSERT_EQ(packet.size(), 72);
+
+  // 3-2. ヘッダの各フィールドを確認
+  // ポート番号 (リトルエンディアン)
+  uint16_t src_port = *reinterpret_cast<uint16_t *>(&packet[0]);
+  uint16_t dst_port = *reinterpret_cast<uint16_t *>(&packet[2]);
+  EXPECT_EQ(src_port, sv.pc_port);
+  EXPECT_EQ(dst_port, sv.mcu_port);
+
+  // 長さ
+  uint16_t length = *reinterpret_cast<uint16_t *>(&packet[4]);
+  EXPECT_EQ(length, 72);
+
+  // 3-3. ボディのデータを確認
+  float l_rpm = *reinterpret_cast<float *>(&packet[8]);  // ボディの先頭から0バイト目
+  float r_rpm = *reinterpret_cast<float *>(&packet[12]); // ボディの先頭から4バイト目
+  EXPECT_FLOAT_EQ(l_rpm, sv.l_rpm);
+  EXPECT_FLOAT_EQ(r_rpm, sv.r_rpm);
+
+  // 3-4. チェックサムを確認
+  uint16_t received_checksum = *reinterpret_cast<uint16_t *>(&packet[6]);
+  // ボディ部分だけを抜き出して、チェックサムを再計算
+  unsigned char * body_ptr = &packet[8];
+  uint16_t calculated_checksum = Serial::calc_checksum(body_ptr, 64);
+  EXPECT_EQ(received_checksum, calculated_checksum);
+}

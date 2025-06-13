@@ -57,10 +57,8 @@ public:
   ~Serial();
   void open(const std::string & port, int baudrate);
   void close();
-  void register_callback(DataCallback callback);
   void start_read();
-  //std::string read();
-  //void write(const std::string & data);
+  void register_callback(DataCallback callback);
   void write(const SendValue & sv);
 
   // パケット関連メソッド
@@ -72,7 +70,6 @@ public:
   // バイナリ変換
   static std::vector<unsigned char> float_to_bin(float value);
   static float bin_to_float(const unsigned char * data);
-
   static std::vector<unsigned char> int32_to_bin(int32_t value);
   static int32_t bin_to_int32(const unsigned char * data);
 

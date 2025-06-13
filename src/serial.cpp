@@ -107,12 +107,18 @@ void Serial::register_callback(DataCallback callback)
 // 未テスト
 void Serial::start_read()
 {
-  serial_port_.async_read_some(
-    boost::asio::buffer(read_buffer_),
-    boost::bind(
-      &Serial::handle_read, this,
-      boost::asio::placeholders::error,
-      boost::asio::placeholders::bytes_transferred));
+  // PacketSerial の区切り文字(0xC0)まで非同期で読み込む
+  boost::asio::async_read_until(
+      serial_port_,
+      stream_buffer_, // データを読み込むためのバッファ
+    (unsigned char)0xC0,   // 区切り文字
+      boost::bind(
+        &Serial::handle_read,
+        this,
+        boost::asio::placeholders::error,
+        boost::asio::placeholders::bytes_transferred
+      )
+  );
 }
 
 uint16_t Serial::calc_checksum(const unsigned char * body_data, size_t body_size)
@@ -197,7 +203,7 @@ void Serial::write(const SendValue & sv)
   );
 }
 
-void Serial::handle_write(const boost::system::error_code & error, size_t bytes_transferred)
+void Serial::handle_write(const boost::system::error_code & error, size_t/* bytes_transferred*/)
 {
   if (error) {
     // ポートを閉じたことによる正常な中断はエラーとして扱わない
@@ -216,6 +222,54 @@ void Serial::handle_write(const boost::system::error_code & error, size_t bytes_
 
 void Serial::handle_read(const boost::system::error_code & error, std::size_t bytes_transferred)
 {
+  if (error) {
+    if (error == boost::asio::error::operation_aborted) {
+      std::cout << "[Serial INFO][handle_read] Read operation aborted." << std::endl;
+    } else {
+      std::cerr << "[Serial ERROR][handle_read] Read error: " << error.message() << std::endl;
+    }
+    return;
+  }
+
+  if (bytes_transferred > 0) {
+    // streambuf から vector<unsigned char> にデータをコピー
+    std::istream is(&stream_buffer_);
+    std::vector<unsigned char> received_packet(bytes_transferred);
+    is.read(reinterpret_cast<char *>(received_packet.data()), bytes_transferred);
+
+    try {
+      // パケットをデコード (末尾の0xC0除去、エスケープ解除)
+      std::vector<unsigned char> decoded_packet = decode(received_packet);
+
+      // サイズチェック (72バイトか？)
+      if (decoded_packet.size() != 72) {
+        std::cerr << "[Serial WARN] Decoded packet size is not 72 bytes: " <<
+          decoded_packet.size() << std::endl;
+      } else {
+        // チェックサム検証
+        unsigned char * body_ptr = &decoded_packet[8];
+        uint16_t received_checksum = *reinterpret_cast<uint16_t *>(&decoded_packet[6]);
+        uint16_t calculated_checksum = calc_checksum(body_ptr, 64);
+
+        if (received_checksum == calculated_checksum) {
+          // 検証成功！登録されたコールバック関数を呼び出してNodeにデータを渡す
+          if (data_callback_) {
+            // ボディ部分(64バイト)を渡す
+            std::vector<unsigned char> body_data(body_ptr, body_ptr + 64);
+            // data_callback_(body_data, rclcpp::Clock().now()); // Nodeに依存しないように、今はタイムスタンプは保留
+            data_callback_(body_data);
+          }
+        } else {
+          std::cerr << "[Serial WARN] Checksum mismatch!" << std::endl;
+        }
+      }
+    } catch (const std::runtime_error & e) {
+      std::cerr << "[Serial WARN] Decode error: " << e.what() << std::endl;
+    }
+  }
+
+  // ★重要★ 次のパケットを受信するために、再度読み取りを開始する
+  start_read();
 }
 
 std::vector<unsigned char> Serial::encode(const std::vector<unsigned char> & raw_packet)

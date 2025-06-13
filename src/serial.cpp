@@ -115,14 +115,6 @@ void Serial::start_read()
       boost::asio::placeholders::bytes_transferred));
 }
 
-void Serial::write(const SendValue & sv) // 仮実装
-{
-  // TODO:
-  // 1. create_packet(sv) でパケット生成
-  // 2. encode(packet) で PacketSerial エンコード
-  // 3. boost::asio::async_write で送信
-}
-
 uint16_t Serial::calc_checksum(const unsigned char * body_data, size_t body_size)
 {
   if (body_size % 2 != 0) {
@@ -184,39 +176,47 @@ std::vector<unsigned char> Serial::create_packet(const SendValue & sv)
   return packet;
 }
 
-// 未テスト
+void Serial::write(const SendValue & sv)
+{
+  // Step 1: 送信するデータ構造体から、72バイトの生パケットを生成する
+  std::vector<unsigned char> raw_packet = create_packet(sv);
+
+  // Step 2: 生パケットを PacketSerial 形式にエンコードする
+  std::vector<unsigned char> encoded_packet = encode(raw_packet);
+
+  // Step 3: エンコードされたパケットを非同期で送信する
+  boost::asio::async_write(
+      serial_port_,
+      boost::asio::buffer(encoded_packet),
+      boost::bind(
+        &Serial::handle_write,
+        this,
+        boost::asio::placeholders::error,
+        boost::asio::placeholders::bytes_transferred
+      )
+  );
+}
+
+void Serial::handle_write(const boost::system::error_code & error, size_t bytes_transferred)
+{
+  if (error) {
+    // ポートを閉じたことによる正常な中断はエラーとして扱わない
+    if (error == boost::asio::error::operation_aborted) {
+      std::cout << "[Serial INFO][handle_write] Write operation aborted." << std::endl;
+    } else {
+      // その他の書き込みエラー
+      std::cerr << "[Serial ERROR][handle_write] Write error: " << error.message() << std::endl;
+    }
+    return;
+  }
+
+  // 正常に送信完了した場合、デバッグ用に何か表示しても良い (任意)
+  // std::cout << "[Serial DEBUG][handle_write] Sent " << bytes_transferred << " bytes." << std::endl;
+}
+
 void Serial::handle_read(const boost::system::error_code & error, std::size_t bytes_transferred)
 {
-  // TODO: ここに非同期読み取り完了後の処理を実装する
-  //       (エラーチェック、デコード、コールバック呼び出し、次の読み取り開始など)
-
-  // とりあえず、何もしないか、簡単なメッセージを標準エラー出力に出力しておく
-  if (error) {
-    // エラー発生時の仮処理
-    std::cerr << "[Serial DEBUG][handle_read] Read error or aborted: " << error.message() <<
-      std::endl;
-  } else {
-    // 正常受信時の仮処理
-    std::cout << "[Serial DEBUG][handle_read] Received " << bytes_transferred <<
-      " bytes (needs processing)." << std::endl;
-  }
-
-  // 本来はここで次の読み取りを開始する start_read() を呼ぶことが多いが、
-  // まずはリンクエラー解消のため、これだけでもOK
 }
-
-// 未テスト
-/*
-void Serial::handle_write(const boost::system::error_code & error, std::size_t bytes_transferred)
-{
-  if (!error) {
-    std::cout << "Successfully wrote " << bytes_transferred << " bytes." << std::endl;
-  } else {
-    std::cerr << "Error in handle_write: " << error.message() << std::endl;
-  }
-}
-*/
-
 
 std::vector<unsigned char> Serial::encode(const std::vector<unsigned char> & raw_packet)
 {
@@ -272,9 +272,6 @@ std::vector<unsigned char> Serial::decode(const std::vector<unsigned char> & enc
   }
   return decoded;
 }
-
-//std::string Serial::decode(const std::string & data) {return data;}
-//int Serial::calc_checksum(const std::string & data) {return 0;}
 
 std::vector<unsigned char> Serial::float_to_bin(float value)
 {

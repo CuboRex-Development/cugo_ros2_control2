@@ -17,11 +17,16 @@
 #ifndef CUGO_ROS2_CONTROL2_NODE_HPP
 #define CUGO_ROS2_CONTROL2_NODE_HPP
 
+#include <memory>
 #include <mutex>
+#include <string>
+#include <vector>
+
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include "tf2_ros/transform_broadcaster.h"
 #include "cugo_ros2_control2/cugo.hpp"
 #include "cugo_ros2_control2/serial.hpp"
 
@@ -32,7 +37,8 @@ class Node : public rclcpp::Node
 {
 public:
   Node();
-  //geometry_msgs::msg::Twist last_cmd_vel;
+
+  // 使わない可能性が高い
   double check_difftime(double recvtime, double prev_recvtime);
   bool is_timeout(double recvtime, double prev_recvtime, double timeout_duration);
   bool is_sametime(double recvtime, double prev_recvtime);
@@ -41,30 +47,46 @@ public:
 
 private:
   void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
-  void publish_odom();
+  void serial_data_callback(const std::vector<unsigned char> & body_data);
   void control_loop();
+
+  // 使わない可能性が高い
+  void publish_odom();
   void notify_message();
   void handle_serial_data(std::optional<int32_t> counter);
   void timer_loop();
-  void serial_data_callback(const std::vector<unsigned char> & body_data);
 
   // サブスクライバーとパブリッシャー
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub;
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
-  rclcpp::TimerBase::SharedPtr odom_timer;
-  rclcpp::TimerBase::SharedPtr timeout_timer;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::TimerBase::SharedPtr control_timer_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  //rclcpp::TimerBase::SharedPtr odom_timer;
+  //rclcpp::TimerBase::SharedPtr timeout_timer;
 
   // インスタンス
-  std::shared_ptr<Serial> serial;
+  std::unique_ptr<cugo_ros2_control2::CuGo> cugo_;
+  std::shared_ptr<cugo_ros2_control2::Serial> serial_;
+
+  // データ共有
+  std::mutex data_mutex_;
+  geometry_msgs::msg::Twist latest_cmd_vel_;
+  rclcpp::Time last_cmd_vel_time_;
+  rclcpp::Time last_serial_receive_time_;
+  rclcpp::Time prev_control_loop_time_;
+  int32_t latest_left_encoder_{0};
+  int32_t latest_right_encoder_{0};
+  int32_t prev_left_encoder_{0};
+  int32_t prev_right_encoder_{0};
+  bool is_first_serial_data_{true}; // 最初の受信データかどうかのフラグ
 
   // タイマーコールバック
   rclcpp::TimerBase::SharedPtr control_timer;
   rclcpp::TimerBase::SharedPtr check_timeout_timer;
 
-  // 状態変数
-  std::mutex data_mutex_;
-
   // launchファイルのパラメータ
+  std::string odom_frame_id;
+  std::string base_link_frame_id;
   std::string subscribe_topic_name;
   std::string publish_topic_name;
   double control_frequency;
@@ -83,12 +105,8 @@ private:
   rclcpp::Time recvtime_cmdvel = prev_recvtime_cmdvel;
   rclcpp::Time prev_recvtime_serial = this->get_clock()->now();
   rclcpp::Time recvtime_serial = prev_recvtime_serial;
-  Twist last_cmd_vel;
-  int32_t latest_left_encoder_ = 0;
-  int32_t latest_right_encoder_ = 0;
-  int32_t prev_left_encoder_ = 0;
-  int32_t prev_right_encoder_ = 0;
-  rclcpp::Time last_serial_receive_time_;
+  //int32_t prev_left_encoder_ = 0;
+  //int32_t prev_right_encoder_ = 0;
   nav_msgs::msg::Odometry current_odom_;
 };
 

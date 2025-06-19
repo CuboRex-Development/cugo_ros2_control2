@@ -55,6 +55,7 @@ ament_target_dependencies(node_lib
   std_msgs
   nav_msgs
   geometry_msgs
+  tf2_ros
   diagnostic_updater
 )
 
@@ -66,6 +67,7 @@ ament_target_dependencies(
   std_msgs
   nav_msgs
   geometry_msgs
+  tf2_ros
   diagnostic_updater
 )
 
@@ -96,6 +98,7 @@ if(BUILD_TESTING)
     std_msgs
     nav_msgs
     geometry_msgs
+    tf2_ros
     diagnostic_updater
   )
 

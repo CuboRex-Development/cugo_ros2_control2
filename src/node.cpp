@@ -81,7 +81,7 @@ Node::Node()
   // メインループ
   control_timer = this->create_wall_timer(
     std::chrono::milliseconds(static_cast<int>(1000.0 / control_frequency)),
-    std::bind(&Node::control, this)
+    std::bind(&Node::control_loop, this)
   );
 
   // 失敗フラグがあれば1秒おきに通知
@@ -133,7 +133,7 @@ RPM Node::set_zero_rpm()
   return rpm;
 }
 
-void Node::control()
+void Node::control_loop()
 {
   RCLCPP_DEBUG(this->get_logger(), "10Hz Job");
 }

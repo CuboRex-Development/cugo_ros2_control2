@@ -18,38 +18,28 @@
 #include <iostream>
 
 using namespace cugo_ros2_control2;
-CuGo::CuGo()
-{
-  // configによる指定がない場合はV4のパラメータを使用する
-  l_wheel_radius = 0.03858f;
-  r_wheel_radius = 0.03858f;
-  tread = 0.376f;
-  reduction_ratio = 20.0f;
-  encoder_resolution = 360;
-}
-
 CuGo::CuGo(
   double config_l_radius, double config_r_radius, double config_tread,
   double config_reduction_ratio, int config_encoder_resolution)
 {
-  // configによる指定がある場合はlaunchファイルのパラメータを使用する
-  l_wheel_radius = config_l_radius;
-  r_wheel_radius = config_r_radius;
-  tread = config_tread;
-  reduction_ratio = config_reduction_ratio;
-  encoder_resolution = config_encoder_resolution;
+  WHEEL_RADIUS_L_ = config_l_radius;
+  WHEEL_RADIUS_R_ = config_r_radius;
+  TREAD_ = config_tread;
+  REDUCTION_RATIO_ = config_reduction_ratio;
+  ENCODER_RESOLUTION_ = config_encoder_resolution;
 }
 
-
+/*
 void CuGo::set_params()
 {
 }
+*/
 
 RPM CuGo::calc_rpm(double linear_x, double angular_z)
 {
   RPM rpm;
-  double l_radian = linear_x / l_wheel_radius - tread * angular_z / (2 * l_wheel_radius);
-  double r_radian = linear_x / r_wheel_radius + tread * angular_z / (2 * r_wheel_radius);
+  double l_radian = linear_x / WHEEL_RADIUS_L_ - TREAD_ * angular_z / (2 * WHEEL_RADIUS_L_);
+  double r_radian = linear_x / WHEEL_RADIUS_R_ + TREAD_ * angular_z / (2 * WHEEL_RADIUS_R_);
   rpm.l_rpm = (float)(l_radian) * 60 / (2 * M_PI);
   rpm.r_rpm = (float)(r_radian) * 60 / (2 * M_PI);
   return rpm;
@@ -58,12 +48,12 @@ RPM CuGo::calc_rpm(double linear_x, double angular_z)
 Twist CuGo::calc_twist(int l_count_diff, int r_count_diff, double dt)
 {
   double l_velocity =
-    l_count_diff / (encoder_resolution * reduction_ratio) * 2 * l_wheel_radius * M_PI;
+    l_count_diff / (ENCODER_RESOLUTION_ * REDUCTION_RATIO_) * 2 * WHEEL_RADIUS_L_ * M_PI;
   double r_velocity =
-    r_count_diff / (encoder_resolution * reduction_ratio) * 2 * r_wheel_radius * M_PI;
+    r_count_diff / (ENCODER_RESOLUTION_ * REDUCTION_RATIO_) * 2 * WHEEL_RADIUS_R_ * M_PI;
 
   double x_velcity = (l_velocity + r_velocity) / 2;
-  double theta_velocity = (r_velocity - l_velocity) / tread;
+  double theta_velocity = (r_velocity - l_velocity) / TREAD_;
 
   Twist twist;
   twist.linear_x = x_velcity / dt;
@@ -83,10 +73,12 @@ Odom CuGo::calc_odom(Odom input_odom, Twist twist, double dt)
   return output_odom;
 }
 
-bool CuGo::check_invalid_value() {return false;}
-bool CuGo::check_timeout() {return false;}
-void CuGo::initialize() {}
-int CuGo::get_mcu_init_value() {return 0;}
+//bool CuGo::check_invalid_value() {return false;}
+//bool CuGo::check_timeout() {return false;}
+//void CuGo::initialize() {}
+//int CuGo::get_mcu_init_value() {return 0;}
+
+/*
 double CuGo::get_tread()
 {
   return tread;
@@ -122,3 +114,4 @@ void CuGo::set_difftime_cmdvel(double difftime)
 {
   difftime_cmdvel = difftime;
 }
+*/

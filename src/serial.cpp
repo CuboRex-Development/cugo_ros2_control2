@@ -277,53 +277,71 @@ void Serial::handle_write(const boost::system::error_code & error, size_t/* byte
 std::vector<unsigned char> Serial::encode(const std::vector<unsigned char> & raw_packet)
 {
   std::vector<unsigned char> encoded;
+  // 最終的なサイズは、最大で raw.size() + (raw.size()/254) + 1。予備確保は適切。
+  encoded.reserve(raw_packet.size() + (raw_packet.size() / 254) + 2);
 
-  for (const auto & byte : raw_packet) {
-    if (byte == 0xC0) {         // 区切り文字 (END)
-      encoded.push_back(0xDB); // エスケープ文字 (ESC)
-      encoded.push_back(0xDC); // ESC_END
-    } else if (byte == 0xDB) {  // エスケープ文字 (ESC)
-      encoded.push_back(0xDB); // エスケープ文字 (ESC)
-      encoded.push_back(0xDD); // ESC_ESC
+  size_t code_ptr_index = 0;
+  encoded.push_back(0); // 最初のコードバイトのプレースホルダとして0を書き込む
+
+  for (const unsigned char byte : raw_packet) {
+    if (byte == 0) {
+      // ゼロが見つかったら、現在のブロックを終了
+      // プレースホルダ位置に、ブロック全体の長さ（コードバイト自身 + データバイト）を書き込む
+      encoded[code_ptr_index] = encoded.size() - code_ptr_index;
+      // 新しいブロックを開始
+      code_ptr_index = encoded.size();
+      encoded.push_back(0); // 次のコードバイトのプレースホルダを書き込む
     } else {
       encoded.push_back(byte);
+      // 現在のブロック長が最大（255）になったかチェック
+      if (encoded.size() - code_ptr_index == 255) {
+        // ブロックが満杯なので終了
+        encoded[code_ptr_index] = 255;
+        // 新しいブロックを開始
+        code_ptr_index = encoded.size();
+        encoded.push_back(0); // 次のコードバイトのプレースホルダを書き込む
+      }
     }
   }
 
-  // 末尾に区切り文字を追加
-  encoded.push_back(0xC0);
+  // ループ終了後、最後のブロックのコードバイトを確定
+  encoded[code_ptr_index] = encoded.size() - code_ptr_index;
+
+  // 最後のブロックがプレースホルダのみ（長さ1）だった場合、そのプレースホルダは不要なので削除
+  if (encoded[code_ptr_index] == 1) {
+    encoded.pop_back();
+  }
 
   return encoded;
+
 }
 
 std::vector<unsigned char> Serial::decode(const std::vector<unsigned char> & encoded_packet)
 {
-  // 入力データの基本的なチェック
-  if (encoded_packet.empty() || encoded_packet.back() != 0xC0) {
-    throw std::runtime_error("Invalid packet: missing END character or empty packet.");
+  if (encoded_packet.empty()) {
+    return {};
   }
 
   std::vector<unsigned char> decoded;
-  // 末尾の区切り文字(0xC0)を除いた範囲をループ
-  for (size_t i = 0; i < encoded_packet.size() - 1; ++i) {
-    if (encoded_packet[i] == 0xDB) { // エスケープ文字
-                                     // 次のバイトをチェックするため、インデックスを一つ進める
-      i++;
-      if (i >= encoded_packet.size() - 1) { // エスケープ文字の直後が終端だった場合
-        throw std::runtime_error("Invalid packet: trailing ESC character.");
-      }
+  decoded.reserve(encoded_packet.size());
 
-      if (encoded_packet[i] == 0xDC) { // ESC_END
-        decoded.push_back(0xC0);
-      } else if (encoded_packet[i] == 0xDD) { // ESC_ESC
-        decoded.push_back(0xDB);
-      } else {
-        // 不正なエスケープシーケンス
-        throw std::runtime_error("Invalid packet: invalid escape sequence.");
-      }
-    } else {
-      // 通常のデータ
-      decoded.push_back(encoded_packet[i]);
+  size_t read_index = 0;
+  while (read_index < encoded_packet.size()) {
+    uint8_t code = encoded_packet[read_index++];
+    if (code == 0) {
+      throw std::runtime_error("Invalid COBS data: unexpected zero byte.");
+    }
+
+    if (read_index + code - 1 > encoded_packet.size()) {
+      throw std::runtime_error("Invalid COBS data: insufficient bytes for block.");
+    }
+
+    for (size_t i = 1; i < code; ++i) {
+      decoded.push_back(encoded_packet[read_index++]);
+    }
+
+    if (code != 0xFF && read_index < encoded_packet.size()) {
+      decoded.push_back(0x00);
     }
   }
   return decoded;

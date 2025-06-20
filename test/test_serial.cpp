@@ -226,73 +226,56 @@ TEST_F(SerialTest, test_bin_to_int32)
 
 TEST_F(SerialTest, test_packetserial_encode)
 {
-  // ケース1: 特殊文字を含まない単純なデータ
-  std::vector<unsigned char> raw1 = {0x01, 0x02, 0x03};
-  std::vector<unsigned char> expected1 = {0x01, 0x02, 0x03, 0xC0};
+  // ケース1: ゼロを含まない単純なデータ
+  std::vector<unsigned char> raw1 = {0x11, 0x22, 0x33};
+  std::vector<unsigned char> expected1 = {0x04, 0x11, 0x22, 0x33};
   EXPECT_EQ(Serial::encode(raw1), expected1);
 
-  // ケース2: 区切り文字(0xC0)のみを含むデータ
-  std::vector<unsigned char> raw2 = {0xC0};
-  std::vector<unsigned char> expected2 = {0xDB, 0xDC, 0xC0}; // 0xC0 -> 0xDB, 0xDC にエスケープ
+  // ケース2: ゼロが真ん中にあるデータ
+  std::vector<unsigned char> raw2 = {0x11, 0x00, 0x22};
+  std::vector<unsigned char> expected2 = {0x02, 0x11, 0x02, 0x22};
   EXPECT_EQ(Serial::encode(raw2), expected2);
 
-  // ケース3: エスケープ文字(0xDB)のみを含むデータ
-  std::vector<unsigned char> raw3 = {0xDB};
-  std::vector<unsigned char> expected3 = {0xDB, 0xDD, 0xC0}; // 0xDB -> 0xDB, 0xDD にエスケープ
+  // ケース3: 先頭がゼロのデータ
+  std::vector<unsigned char> raw3 = {0x00, 0x11, 0x22};
+  std::vector<unsigned char> expected3 = {0x01, 0x03, 0x11, 0x22};
   EXPECT_EQ(Serial::encode(raw3), expected3);
 
-  // ケース4: 両方の特殊文字を含むデータ
-  std::vector<unsigned char> raw4 = {0x01, 0xC0, 0x02, 0xDB, 0x03};
-  std::vector<unsigned char> expected4 = {0x01, 0xDB, 0xDC, 0x02, 0xDB, 0xDD, 0x03, 0xC0};
+  // ケース4: 254バイトの非ゼロデータ (境界値)
+  std::vector<unsigned char> raw4(254, 0xAA);
+  std::vector<unsigned char> expected4;
+  expected4.push_back(0xFF); // code byte
+  expected4.insert(expected4.end(), raw4.begin(), raw4.end());
   EXPECT_EQ(Serial::encode(raw4), expected4);
-
-  // ケース5: 空データ
-  std::vector<unsigned char> raw5 = {};
-  std::vector<unsigned char> expected5 = {0xC0}; // 区切り文字のみ
-  EXPECT_EQ(Serial::encode(raw5), expected5);
 }
 
 TEST_F(SerialTest, test_packetserial_decode)
 {
-    // ケース1: 特殊文字を含まない単純なデータ
-    std::vector<unsigned char> encoded1 = {0x01, 0x02, 0x03, 0xC0};
-    std::vector<unsigned char> expected1 = {0x01, 0x02, 0x03};
-    EXPECT_EQ(Serial::decode(encoded1), expected1);
+  // ケース1: 単純なデータ
+  std::vector<unsigned char> encoded1 = {0x04, 0x11, 0x22, 0x33};
+  std::vector<unsigned char> expected1 = {0x11, 0x22, 0x33};
+  EXPECT_EQ(Serial::decode(encoded1), expected1);
 
-    // ケース2: 区切り文字(0xC0)がエスケープされたデータ
-    std::vector<unsigned char> encoded2 = {0xDB, 0xDC, 0xC0};
-    std::vector<unsigned char> expected2 = {0xC0};
-    EXPECT_EQ(Serial::decode(encoded2), expected2);
+  // ケース2: ゼロが復元されるデータ
+  std::vector<unsigned char> encoded2 = {0x02, 0x11, 0x02, 0x22};
+  std::vector<unsigned char> expected2 = {0x11, 0x00, 0x22};
+  EXPECT_EQ(Serial::decode(encoded2), expected2);
 
-    // ケース3: エスケープ文字(0xDB)がエスケープされたデータ
-    std::vector<unsigned char> encoded3 = {0xDB, 0xDD, 0xC0};
-    std::vector<unsigned char> expected3 = {0xDB};
-    EXPECT_EQ(Serial::decode(encoded3), expected3);
+  // ケース3: 先頭のゼロが復元されるデータ
+  std::vector<unsigned char> encoded3 = {0x01, 0x03, 0x11, 0x22};
+  std::vector<unsigned char> expected3 = {0x00, 0x11, 0x22};
+  EXPECT_EQ(Serial::decode(encoded3), expected3);
 
-    // ケース4: 両方の特殊文字を含むデータ
-    std::vector<unsigned char> encoded4 = {0x01, 0xDB, 0xDC, 0x02, 0xDB, 0xDD, 0x03, 0xC0};
-    std::vector<unsigned char> expected4 = {0x01, 0xC0, 0x02, 0xDB, 0x03};
-    EXPECT_EQ(Serial::decode(encoded4), expected4);
+  // ケース4: 254バイトの非ゼロデータ (境界値)
+  std::vector<unsigned char> encoded4;
+  encoded4.push_back(0xFF);
+  std::vector<unsigned char> raw4(254, 0xAA);
+  encoded4.insert(encoded4.end(), raw4.begin(), raw4.end());
+  EXPECT_EQ(Serial::decode(encoded4), raw4);
 
-    // ケース5: 空データ (区切り文字のみ)
-    std::vector<unsigned char> encoded5 = {0xC0};
-    std::vector<unsigned char> expected5 = {};
-    EXPECT_EQ(Serial::decode(encoded5), expected5);
-
-    // --- 異常系のテスト ---
-
-    // ケース6: 不正なエスケープシーケンス (0xDB の後に予期しないバイト)
-    std::vector<unsigned char> invalid_data1 = {0xDB, 0xAA, 0xC0};
-    // 不正な入力なので、例外がスローされることを期待する
-    ASSERT_THROW(Serial::decode(invalid_data1), std::runtime_error);
-
-    // ケース7: 末尾に区切り文字がない
-    std::vector<unsigned char> invalid_data2 = {0x01, 0x02, 0x03};
-    ASSERT_THROW(Serial::decode(invalid_data2), std::runtime_error);
-
-    // ケース8: 空の入力 (区切り文字すらない)
-    std::vector<unsigned char> invalid_data3 = {};
-    ASSERT_THROW(Serial::decode(invalid_data3), std::runtime_error);
+  // ケース5 (異常系): 不正なデータ (エンコード後に0x00は現れない)
+  std::vector<unsigned char> invalid_data = {0x02, 0x11, 0x00, 0x02, 0x22};
+  ASSERT_THROW(Serial::decode(invalid_data), std::runtime_error);
 }
 
 TEST_F(SerialTest, test_create_packet)

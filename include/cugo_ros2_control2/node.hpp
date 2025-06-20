@@ -27,6 +27,9 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include "tf2_ros/transform_broadcaster.h"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "cugo_ros2_control2/cugo.hpp"
 #include "cugo_ros2_control2/serial.hpp"
 
@@ -51,7 +54,7 @@ private:
   void control_loop();
 
   // 使わない可能性が高い
-  void publish_odom();
+  void publish_odom_and_tf();
   void notify_message();
   void handle_serial_data(std::optional<int32_t> counter);
   void timer_loop();
@@ -85,15 +88,15 @@ private:
   rclcpp::TimerBase::SharedPtr check_timeout_timer;
 
   // launchファイルのパラメータ
-  std::string odom_frame_id;
-  std::string base_link_frame_id;
+  std::string odom_frame_id_;
+  std::string base_link_frame_id_;
   std::string subscribe_topic_name;
   std::string publish_topic_name;
   double control_frequency;
   std::string serial_port;
   int serial_baudrate;
-  double cmd_vel_timeout; // /cmd_velのタイムアウト期間
-  double serial_timeout;  // シリアル通信のタイムアウト期間
+  double cmd_vel_timeout_; // /cmd_velのタイムアウト期間
+  double serial_timeout_;  // シリアル通信のタイムアウト期間
   double tread;
   double l_wheel_radius, r_wheel_radius;
   double reduction_ratio;

@@ -18,6 +18,9 @@
 #define CUGO_ROS2_CONTROL2_CUGO_HPP
 #include <math.h>
 
+namespace cugo_ros2_control2
+{
+
 struct RPM
 {
   float l_rpm;
@@ -37,9 +40,6 @@ struct Odom
   double yaw;
 };
 
-
-namespace cugo_ros2_control2
-{
 
 class CuGo
 {

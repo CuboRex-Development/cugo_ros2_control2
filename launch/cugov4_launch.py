@@ -15,6 +15,8 @@ def generate_launch_description():
 
     # パラメータの定義
     parameters = {
+        'odom_frame_id': 'odom',
+        'base_link_frame_id': 'base_link',
         'subscribe_topic_name': '/cmd_vel',
         'publish_topic_name': '/odom',
         'control_frequency': 10.0,  # MAX:100.0
@@ -28,7 +30,6 @@ def generate_launch_description():
         'r_wheel_radius': 0.03858,  # cugov4のスプロケット半径
         'reduction_ratio': 20.0,    # cugov4のオリエンタルモータの減速比
         'encoder_resolution': 30    # cugov4のオリエンタルモータのエンコーダホール数
-        # 必要に応じて他のパラメータも追加
     }
 
     # ノードの定義

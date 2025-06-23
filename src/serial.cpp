@@ -112,7 +112,7 @@ void Serial::start_read()
   boost::asio::async_read_until(
       serial_port_,
       stream_buffer_,
-    (unsigned char)0xC0,   // この区切り文字が見つかったら handle_read を呼ぶ
+    (unsigned char)0x00,   // この区切り文字が見つかったら handle_read を呼ぶ
       boost::bind(
         &Serial::handle_read,
         this,
@@ -169,8 +169,7 @@ void Serial::handle_read(const boost::system::error_code & error, std::size_t by
     }
   }
 
-  // --- 次の読み取りを開始 ---
-  // ★重要★ この関数を再度呼び出すことで、受信ループを継続する
+  // start_read()を毎回立てることで常に受付スレッドをまわす
   start_read();
 }
 
@@ -276,75 +275,101 @@ void Serial::handle_write(const boost::system::error_code & error, size_t/* byte
 
 std::vector<unsigned char> Serial::encode(const std::vector<unsigned char> & raw_packet)
 {
-  std::vector<unsigned char> encoded;
-  // 最終的なサイズは、最大で raw.size() + (raw.size()/254) + 1。予備確保は適切。
-  encoded.reserve(raw_packet.size() + (raw_packet.size() / 254) + 2);
+  const size_t source_size = raw_packet.size();
+  if (source_size == 0) {
+    // 空のパケットはコード(0x01)と終端マーカー(0x00)のみ
+    return {0x01, 0x00};
+  }
 
-  size_t code_ptr_index = 0;
-  encoded.push_back(0); // 最初のコードバイトのプレースホルダとして0を書き込む
+  // 必要な最大バッファサイズを計算
+  const size_t max_encoded_size = source_size + (source_size / 254) + 1;
+  std::vector<unsigned char> encoded_packet(max_encoded_size);
 
-  for (const unsigned char byte : raw_packet) {
-    if (byte == 0) {
-      // ゼロが見つかったら、現在のブロックを終了
-      // プレースホルダ位置に、ブロック全体の長さ（コードバイト自身 + データバイト）を書き込む
-      encoded[code_ptr_index] = encoded.size() - code_ptr_index;
-      // 新しいブロックを開始
-      code_ptr_index = encoded.size();
-      encoded.push_back(0); // 次のコードバイトのプレースホルダを書き込む
+  size_t read_index = 0;
+  size_t write_index = 1;
+  size_t code_index = 0;
+  unsigned char code = 1;
+
+  while (read_index < source_size) {
+    if (raw_packet[read_index] == 0) {
+      encoded_packet[code_index] = code;
+      code = 1;
+      code_index = write_index++;
+      read_index++;
     } else {
-      encoded.push_back(byte);
-      // 現在のブロック長が最大（255）になったかチェック
-      if (encoded.size() - code_ptr_index == 255) {
-        // ブロックが満杯なので終了
-        encoded[code_ptr_index] = 255;
-        // 新しいブロックを開始
-        code_ptr_index = encoded.size();
-        encoded.push_back(0); // 次のコードバイトのプレースホルダを書き込む
+      encoded_packet[write_index++] = raw_packet[read_index++];
+      code++;
+
+      if (code == 0xFF) {
+        encoded_packet[code_index] = code;
+        code = 1;
+        code_index = write_index++;
       }
     }
   }
 
-  // ループ終了後、最後のブロックのコードバイトを確定
-  encoded[code_ptr_index] = encoded.size() - code_ptr_index;
+  encoded_packet[code_index] = code;
 
-  // 最後のブロックがプレースホルダのみ（長さ1）だった場合、そのプレースホルダは不要なので削除
-  if (encoded[code_ptr_index] == 1) {
-    encoded.pop_back();
-  }
+  // 実際のエンコードサイズにリサイズ
+  encoded_packet.resize(write_index);
 
-  return encoded;
+  // パケット終端マーカーを追加
+  encoded_packet.push_back(0x00);
 
+  return encoded_packet;
 }
 
-std::vector<unsigned char> Serial::decode(const std::vector<unsigned char> & encoded_packet)
+std::vector<unsigned char> Serial::decode(const std::vector<unsigned char> & received_packet)
 {
-  if (encoded_packet.empty()) {
+  if (received_packet.empty()) {
+    return {}; // 空の入力は空の出力
+  }
+
+  // 終端マーカーを除いた、エンコードされた本体の部分を抽出
+  std::vector<unsigned char> encoded_body;
+  if (received_packet.back() == 0x00) {
+    // 終端マーカーが0x00の場合（COBS）
+    if (received_packet.size() > 1) {
+      encoded_body.assign(received_packet.begin(), received_packet.end() - 1);
+    }
+  } else {
+    // 予期せぬデータの場合
+    throw std::runtime_error("Decode Error: Packet does not end with 0x00 marker.");
+  }
+
+  if (encoded_body.empty()) {
     return {};
   }
 
-  std::vector<unsigned char> decoded;
-  decoded.reserve(encoded_packet.size());
+  const size_t source_size = encoded_body.size();
+  std::vector<unsigned char> decoded_packet;
+  decoded_packet.reserve(source_size); // 事前にメモリ確保
 
   size_t read_index = 0;
-  while (read_index < encoded_packet.size()) {
-    uint8_t code = encoded_packet[read_index++];
+
+  while (read_index < source_size) {
+    unsigned char code = encoded_body[read_index];
     if (code == 0) {
-      throw std::runtime_error("Invalid COBS data: unexpected zero byte.");
+      throw std::runtime_error("Decode Error: Zero byte found in encoded data body.");
     }
 
-    if (read_index + code - 1 > encoded_packet.size()) {
-      throw std::runtime_error("Invalid COBS data: insufficient bytes for block.");
+    if (read_index + code > source_size && code != 1) {
+      throw std::runtime_error("Decode Error: Data is shorter than specified by code.");
     }
 
-    for (size_t i = 1; i < code; ++i) {
-      decoded.push_back(encoded_packet[read_index++]);
+    read_index++;
+
+    for (unsigned char i = 1; i < code; i++) {
+      decoded_packet.push_back(encoded_body[read_index++]);
     }
 
-    if (code != 0xFF && read_index < encoded_packet.size()) {
-      decoded.push_back(0x00);
+    // 最後のブロックでなければ0を追加する
+    if (code != 0xFF && read_index < source_size) {
+      decoded_packet.push_back(0);
     }
   }
-  return decoded;
+
+  return decoded_packet;
 }
 
 std::vector<unsigned char> Serial::float_to_bin(float value)

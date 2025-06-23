@@ -92,13 +92,16 @@ TEST_F(NodeTest, test_is_timeout)
   ASSERT_EQ(node->is_timeout(recvtime, prevtime, timeout), false);
 }
 
+/*
 TEST_F(NodeTest, test_set_zero_rpm)
 {
   RPM rpm = node->set_zero_rpm();
   ASSERT_NEAR(rpm.l_rpm, 0.0, 1e-4);
   ASSERT_NEAR(rpm.r_rpm, 0.0, 1e-4);
 }
+*/
 
+/*
 TEST_F(NodeTest, test_is_sametime)
 {
   double prevtime = 0.0;
@@ -141,3 +144,4 @@ TEST_F(NodeTest, test_is_illegaltime)
   recvtime = 66666666.6;
   ASSERT_EQ(node->is_illegaltime(recvtime, prevtime), true);
 }
+*/

@@ -19,9 +19,10 @@
 using namespace cugo_ros2_control2;
 
 Serial::Serial()
-: serial_port_(io_service_)
+: serial_port_(io_context_),
+  work_guard_(boost::asio::make_work_guard(io_context_.get_executor()))
 {
-  io_thread_ = std::thread([this]() {io_service_.run();});
+  io_thread_ = std::thread([this]() {io_context_.run();});
   std::cout << "[Serial INFO] Serial object created." << std::endl;
 }
 
@@ -66,10 +67,10 @@ void Serial::open(const std::string & port, int baudrate)
       io_thread_ = std::thread(
         [this]() {
           try {
-            io_service_.run();
-            std::cout << "[Serial INFO] io_service finished." << std::endl;
+            io_context_.run();
+            std::cout << "[Serial INFO] io_context_ finished." << std::endl;
           } catch (const std::exception & e) {
-            std::cerr << "[Serial FATAL] io_service exception: " << e.what() << std::endl;
+            std::cerr << "[Serial FATAL] io_context_ exception: " << e.what() << std::endl;
           }
         });
     }
@@ -83,8 +84,11 @@ void Serial::open(const std::string & port, int baudrate)
 
 void Serial::close()
 {
-  if (!io_service_.stopped()) {
-    io_service_.stop();
+  // io_context_に与えていたダミーワークをリセットしてrun()から脱出
+  work_guard_.reset();
+
+  if (!io_context_.stopped()) {
+    io_context_.stop();
   }
 
   if (serial_port_.is_open()) {
@@ -124,6 +128,7 @@ void Serial::start_read()
 
 void Serial::handle_read(const boost::system::error_code & error, std::size_t bytes_transferred)
 {
+  std::cout << "[Serial DEBUG] handle_read" << std::endl;
   // --- エラーチェック ---
   if (error) {
     if (error == boost::asio::error::operation_aborted) {
@@ -155,6 +160,7 @@ void Serial::handle_read(const boost::system::error_code & error, std::size_t by
         uint16_t calculated_checksum = calc_checksum(body_ptr, 64);
 
         if (received_checksum == calculated_checksum) {
+          std::cout << "[Serial DEBUG] Checksum OK!" << std::endl;
           // 4. 検証成功！Nodeに通知
           if (data_callback_) {
             std::vector<unsigned char> body_data(body_ptr, body_ptr + 64);
@@ -186,9 +192,11 @@ uint16_t Serial::calc_checksum(const unsigned char * body_data, size_t body_size
   for (size_t i = 0; i < body_size; i += 2) {
     uint16_t word =
       (static_cast<uint16_t>(body_data[i + 1]) << 8) | static_cast<uint16_t>(body_data[i]);
+
     printf(
       "  word[%zu]: data[i]=0x%02X, data[i+1]=0x%02X -> word=0x%04X, current sum=0x%08X\n",
       i / 2, body_data[i], body_data[i + 1], word, sum);
+
     sum += word;
   }
   std::cout << std::endl;
@@ -201,7 +209,6 @@ uint16_t Serial::calc_checksum(const unsigned char * body_data, size_t body_size
   uint16_t checksum = ~final_sum_16bit;
   printf("[Serial DEBUG] checksum (16bit): 0x%04X\n", checksum);
   return checksum;
-  //return static_cast<uint16_t>(~sum);
 }
 
 std::vector<unsigned char> Serial::create_packet(const SendValue & sv)

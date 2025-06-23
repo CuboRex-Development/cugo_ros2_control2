@@ -19,6 +19,8 @@
 #include <string>
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <iostream>
 #include <algorithm>
 #include <functional>
@@ -74,9 +76,11 @@ public:
   static int32_t bin_to_int32(const unsigned char * data);
 
   // boostライブラリ
-  boost::asio::io_service io_service_;
+  //boost::asio::io_service io_service_;
+  boost::asio::io_context io_context_;
   boost::asio::serial_port serial_port_;
   std::thread io_thread_;
+  boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard_;
   std::array<uint8_t, 256> read_buffer_;
   std::vector<uint8_t> read_data_;
   boost::asio::streambuf stream_buffer_; // PacketSerialデコード用の一時バッファとして使うかも？

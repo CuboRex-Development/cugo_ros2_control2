@@ -144,6 +144,8 @@ void Node::serial_data_callback(const std::vector<unsigned char> & body_data)
   // 1. ボディデータからエンコーダ値を取得
   int32_t current_left_encoder = cugo_ros2_control2::Serial::bin_to_int32(body_data.data() + 0);
   int32_t current_right_encoder = cugo_ros2_control2::Serial::bin_to_int32(body_data.data() + 4);
+  RCLCPP_INFO(this->get_logger(), "Serial Callback Received: L_enc=%d, R_enc=%d",
+      current_left_encoder, current_right_encoder);
 
   // 2. 状態を更新（Mutexで保護）
   {
@@ -271,7 +273,7 @@ void Node::control_loop()
 
   // --- シリアルタイムアウト監視 ---
   if ((now - local_last_serial_receive_time).seconds() > serial_timeout_) {
-    RCLCPP_WARN(this->get_logger(), "Serial data timeout.");
+    RCLCPP_WARN(this->get_logger(), "シリアル通信未達。接続を確認してください。");
     // Picoが機能不全の可能性。速度ゼロのオドメトリを発行して異常を知らせる。
     std::lock_guard<std::mutex> lock(data_mutex_);
     current_odom_.twist.twist.linear.x = 0.0;

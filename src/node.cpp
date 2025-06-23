@@ -28,7 +28,6 @@ Node::Node()
   this->declare_parameter("subscribe_topic_name", "/cmd_vel");
   this->declare_parameter("publish_topic_name", "/odom");
   this->declare_parameter("control_frequency", 10.0);
-  //this->declare_parameter("diagnostic_frequency", 1.0);
   this->declare_parameter("serial_port", "/dev/ttyACM0");
   this->declare_parameter("serial_baudrate", 115200);
   this->declare_parameter("cmd_vel_timeout", 0.5); // 秒
@@ -44,7 +43,6 @@ Node::Node()
   this->get_parameter("subscribe_topic_name", subscribe_topic_name);
   this->get_parameter("publish_topic_name", publish_topic_name);
   this->get_parameter("control_frequency", control_frequency);
-  //this->get_parameter("diagnostic_frequency", diagnostic_frequency);
   this->get_parameter("serial_port", serial_port);
   this->get_parameter("serial_baudrate", serial_baudrate);
   this->get_parameter("cmd_vel_timeout", cmd_vel_timeout_);
@@ -61,7 +59,6 @@ Node::Node()
   RCLCPP_INFO(this->get_logger(), "subscribe_topic_name: %s", subscribe_topic_name.c_str());
   RCLCPP_INFO(this->get_logger(), "publish_topic_name: %s", publish_topic_name.c_str());
   RCLCPP_INFO(this->get_logger(), "control_frequency: %f", control_frequency);
-  //RCLCPP_INFO(this->get_logger(), "diagnostic_frequency: %f", diagnostic_frequency);
   RCLCPP_INFO(this->get_logger(), "serial_port: %s", serial_port.c_str());
   RCLCPP_INFO(this->get_logger(), "serial_baudrate: %d", serial_baudrate);
   RCLCPP_INFO(this->get_logger(), "cmd_vel_timeout: %f", cmd_vel_timeout_);
@@ -113,14 +110,6 @@ Node::Node()
     std::chrono::milliseconds(static_cast<int>(1000.0 / control_frequency)),
     std::bind(&Node::control_loop, this)
   );
-
-  // 失敗フラグがあれば1秒おきに通知
-  /*
-  check_timeout_timer = this->create_wall_timer(
-    std::chrono::milliseconds(1000),
-    std::bind(&Node::notify_message, this)
-  );
-  */
 }
 
 void Node::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
@@ -144,7 +133,7 @@ void Node::serial_data_callback(const std::vector<unsigned char> & body_data)
   // 1. ボディデータからエンコーダ値を取得
   int32_t current_left_encoder = cugo_ros2_control2::Serial::bin_to_int32(body_data.data() + 0);
   int32_t current_right_encoder = cugo_ros2_control2::Serial::bin_to_int32(body_data.data() + 4);
-  RCLCPP_INFO(this->get_logger(), "Serial Callback Received: L_enc=%d, R_enc=%d",
+  RCLCPP_INFO(this->get_logger(), "Encoder: L=%d, R=%d",
       current_left_encoder, current_right_encoder);
 
   // 2. 状態を更新（Mutexで保護）
@@ -155,7 +144,7 @@ void Node::serial_data_callback(const std::vector<unsigned char> & body_data)
     if (is_first_serial_data_) {
       prev_left_encoder_ = current_left_encoder;
       prev_right_encoder_ = current_right_encoder;
-      last_serial_receive_time_ = current_receive_time; // ここを prev_serial_receive_time_ としても良い
+      last_serial_receive_time_ = current_receive_time;
       is_first_serial_data_ = false;
       return;
     }
@@ -209,36 +198,6 @@ void Node::serial_data_callback(const std::vector<unsigned char> & body_data)
   publish_odom_and_tf();
 }
 
-bool Node::is_timeout(double current_time, double prev_time, double timeout_duration)
-{
-  return check_difftime(current_time, prev_time) >= timeout_duration;
-}
-
-bool Node::is_sametime(double current_time, double prev_time)
-{
-  double dt = check_difftime(current_time, prev_time);
-  // 更新がないかチェック。なければ同じタイムスタンプを見るため完全一致
-  return std::abs(dt) < 1e-6;
-}
-
-bool Node::is_illegaltime(double current_time, double prev_time)
-{
-  return check_difftime(current_time, prev_time) < 0.0;
-}
-
-double Node::check_difftime(double current_time, double prev_time)
-{
-  return current_time - prev_time;
-}
-
-RPM Node::set_zero_rpm()
-{
-  RPM rpm;
-  rpm.l_rpm = 0.0f;
-  rpm.r_rpm = 0.0f;
-  return rpm;
-}
-
 void Node::control_loop()
 {
   // --- 共有データをローカルにコピー ---
@@ -278,13 +237,8 @@ void Node::control_loop()
     std::lock_guard<std::mutex> lock(data_mutex_);
     current_odom_.twist.twist.linear.x = 0.0;
     current_odom_.twist.twist.angular.z = 0.0;
-    // publish_odom_and_tf(); // 既に止まっている位置情報と速度ゼロを定期的に発行
+    publish_odom_and_tf(); // 既に止まっている位置情報と速度ゼロを定期的に発行
   }
-}
-
-void Node::notify_message()
-{
-  RCLCPP_DEBUG(this->get_logger(), "1Hz Job");
 }
 
 // オドメトリとTFを発行するヘルパー関数
@@ -308,4 +262,20 @@ void Node::publish_odom_and_tf()
   // Odometryメッセージのヘッダを更新して発行
   current_odom_.header.stamp = now;
   odom_pub_->publish(current_odom_);
+
+  tf2::Quaternion q(
+    current_odom_.pose.pose.orientation.x,
+    current_odom_.pose.pose.orientation.y,
+    current_odom_.pose.pose.orientation.z,
+    current_odom_.pose.pose.orientation.w);
+  double roll, pitch, yaw;
+  tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
+
+  RCLCPP_INFO(this->get_logger(), "Odometry: X=%lf, Y=%lf, Orientation=%lf",
+      current_odom_.pose.pose.position.x,
+      current_odom_.pose.pose.position.y,
+      yaw);
+  RCLCPP_INFO(this->get_logger(), "Velocity: Linear=%lf, Angular=%lf",
+      current_odom_.twist.twist.linear.x,
+      current_odom_.twist.twist.angular.z);
 }

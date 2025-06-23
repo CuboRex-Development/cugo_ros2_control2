@@ -29,12 +29,6 @@ CuGo::CuGo(
   ENCODER_RESOLUTION_ = config_encoder_resolution;
 }
 
-/*
-void CuGo::set_params()
-{
-}
-*/
-
 RPM CuGo::calc_rpm(double linear_x, double angular_z)
 {
   RPM rpm;
@@ -72,46 +66,3 @@ Odom CuGo::calc_odom(Odom input_odom, Twist twist, double dt)
   output_odom.y = input_odom.y + twist.linear_x * dt * sin(output_odom.yaw);
   return output_odom;
 }
-
-//bool CuGo::check_invalid_value() {return false;}
-//bool CuGo::check_timeout() {return false;}
-//void CuGo::initialize() {}
-//int CuGo::get_mcu_init_value() {return 0;}
-
-/*
-double CuGo::get_tread()
-{
-  return tread;
-}
-
-double CuGo::get_l_wheel_radius()
-{
-  return l_wheel_radius;
-}
-
-double CuGo::get_r_wheel_radius()
-{
-  return r_wheel_radius;
-}
-
-double CuGo::get_reduction_ratio()
-{
-  return reduction_ratio;
-}
-
-double CuGo::get_encoder_resolution()
-{
-  return encoder_resolution;
-}
-
-void CuGo::set_twist(double linear_x, double angular_z)
-{
-  recv_twist.linear_x = linear_x;
-  recv_twist.angular_z = angular_z;
-}
-
-void CuGo::set_difftime_cmdvel(double difftime)
-{
-  difftime_cmdvel = difftime;
-}
-*/

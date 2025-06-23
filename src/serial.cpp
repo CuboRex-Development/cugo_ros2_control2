@@ -78,6 +78,7 @@ void Serial::open(const std::string & port, int baudrate)
   } catch (const boost::system::system_error & e) {
     std::cerr << "[Serial ERROR] Error opening serial port " << port << ": " << e.what() <<
       std::endl;
+    std::cout << "[Serial INFO] シリアルポートの指定が正しいか、読み書き権限があるか確認してください" << std::endl;
     throw e;
   }
 }
@@ -102,13 +103,11 @@ void Serial::close()
   }
 }
 
-// 未テスト
 void Serial::register_callback(DataCallback callback)
 {
   data_callback_ = callback;
 }
 
-// 未テスト
 void Serial::start_read()
 {
   // PacketSerial の区切り文字(0xC0)が見つかるまで、データを非同期で読み込む
@@ -128,7 +127,6 @@ void Serial::start_read()
 
 void Serial::handle_read(const boost::system::error_code & error, std::size_t bytes_transferred)
 {
-  std::cout << "[Serial DEBUG] handle_read" << std::endl;
   // --- エラーチェック ---
   if (error) {
     if (error == boost::asio::error::operation_aborted) {
@@ -156,11 +154,11 @@ void Serial::handle_read(const boost::system::error_code & error, std::size_t by
                   << decoded_packet.size() << std::endl;
       } else {
         unsigned char * body_ptr = &decoded_packet[8];
-        uint16_t received_checksum = *reinterpret_cast<uint16_t *>(decoded_packet.data() + 6); // TODO:bin_to_int16の作成
+        uint16_t received_checksum = *reinterpret_cast<uint16_t *>(decoded_packet.data() + 6);
         uint16_t calculated_checksum = calc_checksum(body_ptr, 64);
 
         if (received_checksum == calculated_checksum) {
-          std::cout << "[Serial DEBUG] Checksum OK!" << std::endl;
+          //std::cout << "[Serial DEBUG] Checksum OK!" << std::endl;
           // 4. 検証成功！Nodeに通知
           if (data_callback_) {
             std::vector<unsigned char> body_data(body_ptr, body_ptr + 64);
@@ -188,26 +186,16 @@ uint16_t Serial::calc_checksum(const unsigned char * body_data, size_t body_size
   }
 
   uint32_t sum = 0;
-  std::cout << "[Serial DEBUG] Data: ";
   for (size_t i = 0; i < body_size; i += 2) {
     uint16_t word =
       (static_cast<uint16_t>(body_data[i + 1]) << 8) | static_cast<uint16_t>(body_data[i]);
-
-    printf(
-      "  word[%zu]: data[i]=0x%02X, data[i+1]=0x%02X -> word=0x%04X, current sum=0x%08X\n",
-      i / 2, body_data[i], body_data[i + 1], word, sum);
-
     sum += word;
   }
-  std::cout << std::endl;
-  printf("[Serial DEBUG] sum (before carry): 0x%08X\n", sum);
   if (sum >> 16) {
     sum = (sum & 0xFFFF) + (sum >> 16);
   }
-  printf("[Serial DEBUG] sum (after carry): 0x%08X\n", sum);
   uint16_t final_sum_16bit = static_cast<uint16_t>(sum);
   uint16_t checksum = ~final_sum_16bit;
-  printf("[Serial DEBUG] checksum (16bit): 0x%04X\n", checksum);
   return checksum;
 }
 
@@ -274,9 +262,6 @@ void Serial::handle_write(const boost::system::error_code & error, size_t/* byte
     }
     return;
   }
-
-  // 正常に送信完了した場合、デバッグ用に何か表示しても良い (任意)
-  // std::cout << "[Serial DEBUG][handle_write] Sent " << bytes_transferred << " bytes." << std::endl;
 }
 
 

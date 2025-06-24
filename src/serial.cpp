@@ -144,6 +144,11 @@ void Serial::handle_read(const boost::system::error_code & error, std::size_t by
     std::vector<unsigned char> received_packet(bytes_transferred);
     is.read(reinterpret_cast<char *>(received_packet.data()), bytes_transferred);
 
+    stream_buffer_.consume(bytes_transferred);
+    std::cout << "[Serial DEBUG] Processed " << bytes_transferred
+      << " bytes. Remaining buffer size: " << stream_buffer_.size()
+      << " bytes." << std::endl;
+
     try {
       // 2. パケットをデコード (PacketSerial -> 生パケット)
       std::vector<unsigned char> decoded_packet = decode(received_packet);

@@ -8,7 +8,7 @@ def generate_launch_description():
     # ログレベルの変更
     log_level_arg = DeclareLaunchArgument(
         'log_level',
-        default_value='info',
+        default_value='debug',
         description='Log level: debug, info, warn, error, fatal'
     )
     log_level = LaunchConfiguration('log_level')
@@ -19,7 +19,7 @@ def generate_launch_description():
         'base_link_frame_id': 'base_link',
         'subscribe_topic_name': '/cmd_vel',
         'publish_topic_name': '/odom',
-        'control_frequency': 10.0,  # MAX:100.0
+        'control_frequency': 50.0,  # MAX:100.0
         # 'diagnostic_frequency': 1.0,
         'serial_port': '/dev/ttyACM0',
         'serial_baudrate': 115200,
@@ -40,7 +40,7 @@ def generate_launch_description():
         output='screen',
         parameters=[parameters],
         emulate_tty=True,
-        arguments=['--ros-args', '--log-level', log_level]
+        arguments=['--ros-args', '--log-level', log_level],
     )
 
     return LaunchDescription([

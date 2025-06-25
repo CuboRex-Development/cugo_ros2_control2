@@ -196,6 +196,7 @@ void Node::serial_data_callback(const std::vector<unsigned char> & body_data)
 
   // 3. 計算したオドメトリとTFを発行
   publish_odom_and_tf();
+  RCLCPP_DEBUG(this->get_logger(), "serial_data_callback() published");
 }
 
 void Node::control_loop()
@@ -238,6 +239,7 @@ void Node::control_loop()
     current_odom_.twist.twist.linear.x = 0.0;
     current_odom_.twist.twist.angular.z = 0.0;
     publish_odom_and_tf(); // 既に止まっている位置情報と速度ゼロを定期的に発行
+    RCLCPP_DEBUG(this->get_logger(), "control_loop() published");
   }
 }
 

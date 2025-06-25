@@ -81,9 +81,9 @@ public:
   boost::asio::serial_port serial_port_;
   std::thread io_thread_;
   boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard_;
-  std::array<uint8_t, 256> read_buffer_;
-  std::vector<uint8_t> read_data_;
-  boost::asio::streambuf stream_buffer_; // PacketSerialデコード用の一時バッファとして使うかも？
+  std::array<uint8_t, 256> raw_read_buffer_;
+  std::vector<uint8_t> packet_buffer_;
+  boost::asio::streambuf stream_buffer_;
   DataCallback data_callback_;
 
 private:

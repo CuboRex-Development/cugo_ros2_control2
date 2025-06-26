@@ -110,21 +110,6 @@ void Serial::register_callback(DataCallback callback)
 
 void Serial::start_read()
 {
-  /* stream_buffer_で一定の通信をこなすとランダムでクラッシュ。自前で実装する。
-  // PacketSerial の区切り文字(0x00)が見つかるまで、データを非同期で読み込む
-  // データは stream_buffer_ に溜め込まれる
-  boost::asio::async_read_until(
-      serial_port_,
-      stream_buffer_,
-    (unsigned char)0x00,   // この区切り文字が見つかったら handle_read を呼ぶ
-      boost::bind(
-        &Serial::handle_read,
-        this,
-        boost::asio::placeholders::error,
-        boost::asio::placeholders::bytes_transferred
-      )
-  );
-   */
   serial_port_.async_read_some(
       boost::asio::buffer(raw_read_buffer_),
       boost::bind(
@@ -132,74 +117,12 @@ void Serial::start_read()
         this,
         boost::asio::placeholders::error,
         boost::asio::placeholders::bytes_transferred
-        )
-      );
+      )
+  );
 }
 
 void Serial::handle_read(const boost::system::error_code & error, std::size_t bytes_transferred)
 {
-  /*
-  // --- エラーチェック ---
-  if (error) {
-    if (error == boost::asio::error::operation_aborted) {
-      std::cout << "[Serial INFO][handle_read] Read operation aborted." << std::endl;
-    } else {
-      std::cerr << "[Serial ERROR][handle_read] Read error: " << error.message() << std::endl;
-    }
-    return; // エラー時はループを継続しない
-  }
-
-  std::cout << "[Serial DEBUG][handle_read] bytes_transferred: " << bytes_transferred << std::endl;
-  std::cout << "[Serial DEBUG][handle_read] error: " << error << std::endl;
-
-  // --- データ処理 ---
-  if (bytes_transferred > 0) {
-    // 1. バッファから受信パケットを抽出
-    std::istream is(&stream_buffer_);
-    std::cout << "[Serial DEBUG][handle_read] istream &stream_buffer_" << std::endl;
-    std::vector<unsigned char> received_packet(bytes_transferred);
-    is.read(reinterpret_cast<char *>(received_packet.data()), bytes_transferred);
-    std::cout << "[Serial DEBUG][handle_read] is.read()" << std::endl;
-
-    stream_buffer_.consume(bytes_transferred);
-    //stream_buffer_.consume(100000);
-    std::cout << "[Serial DEBUG] Processed " << bytes_transferred
-      << " bytes. Remaining buffer size: " << stream_buffer_.size()
-      << " bytes." << std::endl;
-
-    try {
-      // 2. パケットをデコード (PacketSerial -> 生パケット)
-      std::vector<unsigned char> decoded_packet = decode(received_packet);
-
-      // 3. パケットを検証
-      if (decoded_packet.size() != 72) {
-        std::cerr << "[Serial WARN] Decoded packet size is not 72 bytes: "
-                  << decoded_packet.size() << std::endl;
-      } else {
-        unsigned char * body_ptr = &decoded_packet[8];
-        uint16_t received_checksum = *reinterpret_cast<uint16_t *>(decoded_packet.data() + 6);
-        uint16_t calculated_checksum = calc_checksum(body_ptr, 64);
-
-        if (received_checksum == calculated_checksum) {
-          //std::cout << "[Serial DEBUG] Checksum OK!" << std::endl;
-          // 4. 検証成功！Nodeに通知
-          if (data_callback_) {
-            std::vector<unsigned char> body_data(body_ptr, body_ptr + 64);
-            data_callback_(body_data);
-          }
-        } else {
-          std::cerr << "[Serial WARN] Checksum mismatch!" << std::endl;
-        }
-      }
-    } catch (const std::runtime_error & e) {
-      std::cerr << "[Serial WARN] Decode error: " << e.what() << std::endl;
-    }
-  }
-
-  // start_read()を毎回立てることで常に受付スレッドをまわす
-  start_read();
-   */
-
   // --- 1. エラーチェック ---
   if (error) {
     if (error == boost::asio::error::operation_aborted) {
@@ -218,7 +141,7 @@ void Serial::handle_read(const boost::system::error_code & error, std::size_t by
         packet_buffer_.end(),
         raw_read_buffer_.begin(),
         raw_read_buffer_.begin() + bytes_transferred
-        );
+    );
   }
 
   // --- 3. バッファからパケットを探索・処理するループ ---
@@ -239,7 +162,6 @@ void Serial::handle_read(const boost::system::error_code & error, std::size_t by
     // 処理済みの部分を組み立て用バッファから削除
     packet_buffer_.erase(packet_buffer_.begin(), it + 1);
 
-    // ▼▼▼ 以下は、以前の streambuf を使っていた handle_read の処理と同じ ▼▼▼
     try {
       // パケットをデコード (COBS -> 生パケット)
       std::vector<unsigned char> decoded_packet = decode(received_packet);
@@ -247,7 +169,7 @@ void Serial::handle_read(const boost::system::error_code & error, std::size_t by
       // パケットを検証 (サイズやチェックサム)
       if (decoded_packet.size() != 72) {
         std::cerr << "[Serial WARN] Decoded packet size is not 72 bytes: "
-          << decoded_packet.size() << std::endl;
+                  << decoded_packet.size() << std::endl;
       } else {
         unsigned char * body_ptr = &decoded_packet[8];
         uint16_t received_checksum = *reinterpret_cast<uint16_t *>(decoded_packet.data() + 6);
@@ -266,7 +188,6 @@ void Serial::handle_read(const boost::system::error_code & error, std::size_t by
     } catch (const std::runtime_error & e) {
       std::cerr << "[Serial WARN] Decode error: " << e.what() << std::endl;
     }
-    // ▲▲▲ ここまで ▲▲▲
   } // パケット探索ループの終わり
 
   // --- 5. 次の非同期読み込みを開始 ---
@@ -327,7 +248,6 @@ std::vector<unsigned char> Serial::create_packet(const SendValue & sv)
 
 void Serial::write(const SendValue & sv)
 {
-  std::cout << "[Serail DEBUG][write] write" << std::endl;
   // Step 1: 送信するデータ構造体から、72バイトの生パケットを生成する
   std::vector<unsigned char> raw_packet = create_packet(sv);
 
@@ -345,12 +265,10 @@ void Serial::write(const SendValue & sv)
         boost::asio::placeholders::bytes_transferred
       )
   );
-  std::cout << "[Serial DEBUG][write] after async_write" << std::endl;
 }
 
 void Serial::handle_write(const boost::system::error_code & error, size_t/* bytes_transferred*/)
 {
-  std::cout << "[Serial DEBUG][handle_write] handle_write" << std::endl;
   if (error) {
     // ポートを閉じたことによる正常な中断はエラーとして扱わない
     if (error == boost::asio::error::operation_aborted) {

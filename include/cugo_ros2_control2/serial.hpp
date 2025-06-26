@@ -30,7 +30,6 @@
 #include <cstdint>
 #include <cstddef>
 #include <stdexcept>
-//#include "cugo_ros2_control2/COBS.h"
 
 #define PACKET_SIZE 72
 #define PACKET_HEADER_SIZE 8
@@ -76,23 +75,18 @@ public:
   static int32_t bin_to_int32(const unsigned char * data);
 
   // boostライブラリ
-  //boost::asio::io_service io_service_;
   boost::asio::io_context io_context_;
   boost::asio::serial_port serial_port_;
   std::thread io_thread_;
   boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard_;
   std::array<uint8_t, 256> raw_read_buffer_;
   std::vector<uint8_t> packet_buffer_;
-  boost::asio::streambuf stream_buffer_;
+  //boost::asio::streambuf stream_buffer_;
   DataCallback data_callback_;
 
 private:
   void handle_read(const boost::system::error_code & error, std::size_t bytes_transferred);
   void handle_write(const boost::system::error_code & error, std::size_t bytes_transferred);
-
-  // writeメソッドの実装で使うキュー (オプション)
-  // std::deque<std::vector<unsigned char>> write_queue_;
-  // std::mutex write_mutex_;
 };
 
 } // namespace cugo_ros2_control2

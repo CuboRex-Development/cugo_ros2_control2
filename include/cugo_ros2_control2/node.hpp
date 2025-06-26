@@ -41,31 +41,17 @@ class Node : public rclcpp::Node
 public:
   Node();
 
-  // 使わない可能性が高い
-  double check_difftime(double recvtime, double prev_recvtime);
-  bool is_timeout(double recvtime, double prev_recvtime, double timeout_duration);
-  bool is_sametime(double recvtime, double prev_recvtime);
-  bool is_illegaltime(double recvtime, double prev_recvtime);
-  RPM set_zero_rpm();
-
 private:
   void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
   void serial_data_callback(const std::vector<unsigned char> & body_data);
   void control_loop();
-
-  // 使わない可能性が高い
   void publish_odom_and_tf();
-  void notify_message();
-  void handle_serial_data(std::optional<int32_t> counter);
-  void timer_loop();
 
   // サブスクライバーとパブリッシャー
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::TimerBase::SharedPtr control_timer_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  //rclcpp::TimerBase::SharedPtr odom_timer;
-  //rclcpp::TimerBase::SharedPtr timeout_timer;
 
   // インスタンス
   std::unique_ptr<cugo_ros2_control2::CuGo> cugo_;
@@ -85,7 +71,7 @@ private:
 
   // タイマーコールバック
   rclcpp::TimerBase::SharedPtr control_timer;
-  rclcpp::TimerBase::SharedPtr check_timeout_timer;
+//  rclcpp::TimerBase::SharedPtr check_timeout_timer;
 
   // launchファイルのパラメータ
   std::string odom_frame_id_;
@@ -108,8 +94,6 @@ private:
   rclcpp::Time recvtime_cmdvel = prev_recvtime_cmdvel;
   rclcpp::Time prev_recvtime_serial = this->get_clock()->now();
   rclcpp::Time recvtime_serial = prev_recvtime_serial;
-  //int32_t prev_left_encoder_ = 0;
-  //int32_t prev_right_encoder_ = 0;
   nav_msgs::msg::Odometry current_odom_;
 };
 

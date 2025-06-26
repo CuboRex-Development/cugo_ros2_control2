@@ -1,8 +1,11 @@
 # cugo_ros2_control2
-![image](https://github.com/CuboRex-Development/cugo_ros_control/assets/97714660/96b0c630-a114-4e7f-a091-72909d151495)
-** 暫定画像差し替えろ **
+![image](https://github.com/user-attachments/assets/be603edd-43dd-42b7-8215-2a89df03e3c2)
 
-クローラロボット開発プラットフォームに付属するマイコンに対して制御指令を送り、エンコーダの読み取り結果を受け取るノードです。ROS 2 topicの`/cmd_vel`をSubscribeし、`/odom`をPublishします。セットで[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_arduinodriver.git)使用します。
+
+クローラロボット開発プラットフォームのROS 2ノードです。
+
+ROS 2 topicの`/cmd_vel`をSubscribeし、`/odom`をPublishします。
+セットで[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_arduinodriver.git)使用します。
 
 ROS 2 Humble以降でご利用いただけます。
 
@@ -12,14 +15,19 @@ ROS 2 Humble以降でご利用いただけます。
 - [Installation](#installation)
 - [Usage](#usage)
 - [Topics and Parameters](#topics-and-parameters)
-- [UDP Protocol](#udp-protocol)
 - [Note](#note)
 - [License](#license)
 
 # Features
-Subscribeした`/cmd_vel`の速度ベクトルになるような仮想車輪L/Rの回転数を計算します。計算した回転数をマイコンに送信します。また、[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)が書き込まれたマイコンからエンコーダのカウント数を受け取ります。カウント数からロボットのオドメトリを計算し、`/odom`を生成しPublishします。
+Subscribeした`/cmd_vel`の速度ベクトルになるような仮想車輪L/Rの回転数を計算します。
 
-<img width="1142" alt="cugo_ros_control_archi" src="https://github.com/CuboRex-Development/cugo_ros_control/assets/22425319/21e0d954-87ec-436d-9f98-5f8bf35706f9">
+計算した回転数をロボットのマイコンに送信します。
+
+また、[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)が書き込まれたロボットのマイコンからエンコーダのカウント数を受け取ります。
+
+カウント数からロボットのオドメトリを計算し、`/odom`を生成しPublishします。
+
+![image](https://github.com/user-attachments/assets/f12eef02-0bb9-4654-890b-ffc72c7c708e)
 
 
 #### 対応製品
@@ -27,17 +35,10 @@ CuboRex製品では、
 * クローラロボット開発プラットフォーム CuGo V4
 * クローラロボット開発プラットフォーム CuGo V3i
 
-でお使いいただけます。それぞれ使用するコードが異なることがありますので、下記表からご参照ください。
+でお使いいただけます。
 
 
-製品名|ROSパッケージ|マイコンスケッチ
------------|-----------------|-----------------------------
-ROS開発キット|このページ|[ArduinoUNO用](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/uno-udp)
-クローラロボット開発プラットフォーム|このページ|[RaspberryPiPico用](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)
-
-#### クローラロボット開発プラットフォームの場合
-付属のRaspberryPiPicoと通信します。
-付属のRaspberryPiPicoに[こちらのスケッチ](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)を書き込み、ROS PCとRaspberryPiPicoをUSBケーブルで接続してください。
+クローラロボット開発プラットフォーム付属のRaspberryPiPicoに[こちらのスケッチ](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)を書き込み、ROS 2 PCとRaspberryPiPicoをUSBケーブルで接続してください。
 その後ROSパッケージを実行してください。自動で通信開始します。
 
 
@@ -97,27 +98,29 @@ $ ros2 launch cugo_ros2_control cugov3i_ros2_control_launch.py
 - `/cmd_vel` ([geometry_msgs/msg/Twist](https://docs.ros2.org/foxy/api/geometry_msgs/msg/Twist.html))
 
 ## Parameters
-- `ODOMETRY_DISPLAY (boolean, default: true)`
-  - オドメトリ表示の有無（trueで表示）
-- `PARAMETERS_DISPLAY (boolean, default: false)`
-  - 設定したパラメータを起動時に表示（trueで表示）
-- `TARGET_RPM_DISPLAY (boolean, default: true)`
-  - 目標RPM表示の有無（trueで表示）
-- `SENT_PACKET_DISPLAY (boolean, default: false)`
-  - 送信パケットのデバッグ表示の有無（trueで表示)
-- `RECV_PACKET_DISPLAY (boolean, default: true)`
-  - 受信パケットのデバッグ表示の有無（trueで表示）
-- `READ_DATA_DISPLAY (boolean, default: true)`
-  - 受信パケットからデコードした数値の表示の有無（trueで表示）
-- `arduino_addr (string, default: 192.168.11.216)`
-  - Arduinoドライバの通信受付IPアドレス
-- `arduino_port (int, default: 8888)`
-  - Arduinoドライバの通信受付ポート番号
-- `encoder_max (int, default: 2147483647)`
-  - エンコーダ最大カウント
-  - マイコン側のカウンタがオーバーフローする値を設定
-- `encoder_resolution (int, default: 2048)`
-  - エンコーダ分解能
+- `odom_frame_id (string, default: odom)`
+  - オドメトリフレーム名の指定
+- `base_link_frame_id (string, default: base_link)`
+  - ベースリンクフレーム名の指定
+- `subscribe_topic_name (string, default: /cmd_vel)`
+  - Twist指示のトピック名の指定
+- `publish_topic_name (string, default: /odom)`
+  - Odom出力のトピック名の指定
+- `control_frequency (float, default: 10.0)`
+  - マイコンへの指示、OdomのPublishの更新周期
+- `serial_port (string, default: /dev/ttyACM0)`
+  - RaspberryPi Picoのシリアル通信のポート名の指定
+- `serial_baudrate (int, default: 115200)`
+  - シリアル通信のボーレート
+- `cmd_vel_timeout (float, default: 0.5)`
+  - /cmd_velの通信途絶判定を決めるタイムアウト時間
+  - タイムアウトしたら速度0を上書きして強制的に停止
+- `serial_timeout (float, default: 0.5)`
+  - マイコンの通信途絶判定を決めるタイムアウト時間
+  - タイムアウトしたらodom.twsitの値を0にして仮想ロボット速度をリセット
+- `tread (float, default: 0.376)`
+  - 回転ベクトルを計算するときに使用するクローラ間距離
+  - アルミフレームでクローラ間距離を変えた場合この値を調整
 - `odom_child_frame_id (string, default: base_link)`
   - オドメトリ子フレームID
 - `odom_frame_id (string, default: odom)`
@@ -130,38 +133,40 @@ $ ros2 launch cugo_ros2_control cugov3i_ros2_control_launch.py
   - 通信タイムアウトまでの時間[sec]
 - `tread (float, default: 0.380)`
   - トレッド幅[m]
-- `wheel_radius_l (float, default: 0.03858)`
+- `l_wheel_radius (float, default: 0.03858)`
   - 左クローラの仮想タイヤ半径[m]
-- `wheel_radius_r (float, default: 0.03858)`
+  - まっすぐ走らせてオドメトリがだんだん左に曲がっていく場合この値を少しだけ大きくするとよい（0.00002m刻み）
+- `l_wheel_radius (float, default: 0.03858)`
   - 右クローラの仮想タイヤ半径[m]
-- `comm_type (string, default: UDP)`
-  - 通信をUDPでするかUSBでするか
-- `serial_port (string, default: /dev/ttyACM0)`
-  - USB-Serialで通信するポートを指定
-- `serial_baudrate (int, default: 115200)`
-  - USB-Serial通信のボーレートを設定
+  - まっすぐ走らせてオドメトリがだんだん右に曲がっていく場合この値を少しだけ大きくするとよい（0.00002m刻み）
+- `reduction_ratio (float, default: 20.0)`
+  - 減速比
+  - ギヤボックスを変更した場合この値を調整
+- `encoder_resolution (int, default: 30)`
+  - モータのエンコーダ分解能
+  - モータを交換した場合この値を調整
 
 上記のパラメータはlaunchファイルで設定されています。
 
 # Protocol
 [cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)と、ヘッダ8バイト・ボディ64バイトの合計72バイトから構成されるデータを通信しています。
 ボディデータに格納されるデータの一覧は以下の通りになります。
-なお、扱うデータは今後拡張する予定です。
+ボディの残りの領域は今後拡張できるように確保されているだけで、現在は00を送受信しています。
 
 ### Arduinoドライバへの送信データ
 
 Data Name      | Data Type  | Data Size(byte) | Start Address in PacketBody | Data Abstract
 ---------------|------------|-----------------|-----------------------------|--------------------
-TARGET_RPM_L   | float      | 4             | 0                           | RPM指令値(左モータ)
-TARGET_RPM_R   | float      | 4             | 4                           | RPM指令値(右モータ)
+TARGET_RPM_L   | float      | 4               | 0                           | RPM指令値(左モータ)
+TARGET_RPM_R   | float      | 4               | 4                           | RPM指令値(右モータ)
 
 
 ### Arduinoドライバからの受信データ
 
 Data Name      | Data Type  | Data Size(byte) | Start Address in PacketBody | Data Abstract
 ---------------|------------|-----------------|-----------------------------|-----------------
-RECV_ENCODER_L | float      | 4             | 0                           | 左エンコーダのカウント数
-RECV_ENCODER_R | float      | 4             | 4                           | 右エンコーダのカウント数
+RECV_ENCODER_L | int32      | 4               | 0                           | 左エンコーダのカウント数
+RECV_ENCODER_R | int32      | 4               | 4                           | 右エンコーダのカウント数
 
 
 # Note

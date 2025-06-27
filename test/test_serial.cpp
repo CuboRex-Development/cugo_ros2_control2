@@ -287,8 +287,8 @@ TEST_F(SerialTest, test_create_packet)
 {
   // 1. 送信したいデータを用意
   cugo_ros2_control2::SendValue sv;
-  sv.pc_port = 8888;
-  sv.mcu_port = 8889;
+  sv.product_id = 0;
+  sv.robot_id = 0;
   sv.l_rpm = 10.5f;
   sv.r_rpm = -20.25f;
 
@@ -304,8 +304,8 @@ TEST_F(SerialTest, test_create_packet)
   // ポート番号 (リトルエンディアン)
   uint16_t src_port = *reinterpret_cast<uint16_t *>(&packet[0]);
   uint16_t dst_port = *reinterpret_cast<uint16_t *>(&packet[2]);
-  EXPECT_EQ(src_port, sv.pc_port);
-  EXPECT_EQ(dst_port, sv.mcu_port);
+  EXPECT_EQ(src_port, sv.product_id);
+  EXPECT_EQ(dst_port, sv.robot_id);
 
   // 長さ
   uint16_t length = *reinterpret_cast<uint16_t *>(&packet[4]);

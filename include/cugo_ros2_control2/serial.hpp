@@ -40,8 +40,8 @@ namespace cugo_ros2_control2
 
 struct SendValue
 {
-  uint16_t pc_port;
-  uint16_t mcu_port;
+  uint16_t product_id;
+  uint16_t robot_id;
   float l_rpm;
   float r_rpm;
   // 送信メッセージが増えればここに追加

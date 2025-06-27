@@ -234,8 +234,8 @@ std::vector<unsigned char> Serial::create_packet(const SendValue & sv)
   unsigned char * header_ptr = packet.data();
   uint16_t length = 72;
   // ヘッダに各値をコピー
-  memcpy(header_ptr + 0, &sv.pc_port, sizeof(uint16_t));
-  memcpy(header_ptr + 2, &sv.mcu_port, sizeof(uint16_t));
+  memcpy(header_ptr + 0, &sv.product_id, sizeof(uint16_t));
+  memcpy(header_ptr + 2, &sv.robot_id, sizeof(uint16_t));
   memcpy(header_ptr + 4, &length, sizeof(uint16_t));
 
   // ボディデータからチェックサムを計算

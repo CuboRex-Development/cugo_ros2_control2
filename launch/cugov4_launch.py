@@ -20,7 +20,6 @@ def generate_launch_description():
         'subscribe_topic_name': '/cmd_vel',
         'publish_topic_name': '/odom',
         'control_frequency': 10.0,  # MAX:100.0
-        # 'diagnostic_frequency': 1.0,
         'serial_port': '/dev/ttyACM0',
         'serial_baudrate': 115200,
         'cmd_vel_timeout': 0.5,     # 秒
@@ -29,7 +28,8 @@ def generate_launch_description():
         'l_wheel_radius': 0.03858,  # cugov4のスプロケット半径
         'r_wheel_radius': 0.03858,  # cugov4のスプロケット半径
         'reduction_ratio': 20.0,    # cugov4のオリエンタルモータの減速比
-        'encoder_resolution': 30    # cugov4のオリエンタルモータのエンコーダホール数
+        'encoder_resolution': 30,   # cugov4のオリエンタルモータのエンコーダホール数
+        'product_id': 1             # cugov4の識別子
     }
 
     # ノードの定義

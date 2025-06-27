@@ -87,6 +87,8 @@ private:
   double l_wheel_radius, r_wheel_radius;
   double reduction_ratio;
   int encoder_resolution;
+  int product_id;
+  int robot_id;
 
   // ROSでの共有データ
   double linear_x, angular_z;

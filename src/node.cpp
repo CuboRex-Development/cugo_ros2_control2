@@ -37,6 +37,7 @@ Node::Node()
   this->declare_parameter("r_wheel_radius", 0.03858);
   this->declare_parameter("reduction_ratio", 20.0);
   this->declare_parameter("encoder_resolution", 30);
+  this->declare_parameter("product_id", 0);
 
   this->get_parameter("odom_frame_id", odom_frame_id_);
   this->get_parameter("base_link_frame_id", base_link_frame_id_);
@@ -52,6 +53,7 @@ Node::Node()
   this->get_parameter("r_wheel_radius", r_wheel_radius);
   this->get_parameter("reduction_ratio", reduction_ratio);
   this->get_parameter("encoder_resolution", encoder_resolution);
+  this->get_parameter("product_id", product_id);
 
   RCLCPP_INFO(this->get_logger(), "設定パラメータ");
   RCLCPP_INFO(this->get_logger(), "odom_frame_id: %s", odom_frame_id_.c_str());
@@ -68,6 +70,7 @@ Node::Node()
   RCLCPP_INFO(this->get_logger(), "r_wheel_radius: %f", r_wheel_radius);
   RCLCPP_INFO(this->get_logger(), "reduction_ratio: %f", reduction_ratio);
   RCLCPP_INFO(this->get_logger(), "encoder_resolution: %d", encoder_resolution);
+  RCLCPP_DEBUG(this->get_logger(), "product_id: %d", product_id);
 
   // 各クラスの初期化
   cugo_ = std::make_unique<cugo_ros2_control2::CuGo>(
@@ -218,8 +221,8 @@ void Node::control_loop()
 
   // --- 送信処理 ---
   cugo_ros2_control2::SendValue sv;
-  sv.pc_port = 8888;  // UDP時代の名残。パケット形式をなぞるだけで使わない。
-  sv.mcu_port = 8889; // UDP時代の名残。パケット形式をなぞるだけで使わない。
+  sv.product_id = product_id;  // V4/V3iの区別。マイコン内でパラメータを切り替え処理を行う。
+  sv.robot_id = 0; // 複数台ロボットを動かしたときに使いたい。今は何もしない。
 
   if ((now - local_last_cmd_vel_time).seconds() > cmd_vel_timeout_) {
     sv.l_rpm = 0.0f;
@@ -229,6 +232,7 @@ void Node::control_loop()
     sv.l_rpm = rpm.l_rpm;
     sv.r_rpm = rpm.r_rpm;
   }
+  RCLCPP_DEBUG(this->get_logger(),"command rpm(L/R): %f / %f", sv.l_rpm, sv.r_rpm);
   serial_->write(sv);
 
   // --- シリアルタイムアウト監視 ---

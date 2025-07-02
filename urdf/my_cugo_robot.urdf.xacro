@@ -6,7 +6,14 @@
   <xacro:cugo_base />
   
   <!-- 任意のセンサを追加するurdf -->
+  <!-- MID-360を追加する場合はurdf/parts/mid360.urdf.xacroを編集すること
   <xacro:include filename="$(find cugo_ros2_control2)/urdf/parts/mid360.urdf.xacro" />
   <xacro:mid360 />
+  -->
+
+  <!-- 任意の部品を追加する場合
+  <xacro:include filename="$(find cugo_ros2_control2)/urdf/parts/your-parts.urdf.xacro" />
+  <xacro:your-parts/>
+  -->
 
 </robot>

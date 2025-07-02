@@ -105,6 +105,7 @@ Node::Node()
     subscribe_topic_name.c_str(), 1,
     std::bind(&Node::cmd_vel_callback, this, std::placeholders::_1));
   odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>(publish_topic_name.c_str(), 10);
+  joint_state_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("/joint_states", 10);
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
 
@@ -136,8 +137,17 @@ void Node::serial_data_callback(const std::vector<unsigned char> & body_data)
   // 1. ボディデータからエンコーダ値を取得
   int32_t current_left_encoder = cugo_ros2_control2::Serial::bin_to_int32(body_data.data() + 0);
   int32_t current_right_encoder = cugo_ros2_control2::Serial::bin_to_int32(body_data.data() + 4);
+  int32_t latest_left_encoder_ = current_left_encoder;
+  int32_t latest_right_encoder_ = current_right_encoder;
+
   RCLCPP_INFO(this->get_logger(), "Encoder: L=%d, R=%d",
       current_left_encoder, current_right_encoder);
+
+  left_wheel_angle_ =
+    (double)latest_left_encoder_ / (encoder_resolution * reduction_ratio) * 2.0 * M_PI;
+  right_wheel_angle_ =
+    (double)latest_right_encoder_ / (encoder_resolution * reduction_ratio) * 2.0 * M_PI;
+
 
   // 2. 状態を更新（Mutexで保護）
   {
@@ -257,6 +267,12 @@ void Node::publish_odom_and_tf()
   t.header.stamp = now;
   t.header.frame_id = odom_frame_id_;
   t.child_frame_id = base_link_frame_id_;
+
+  // JointStateメッセージの作成
+  joint_state_.header.stamp = now;
+  joint_state_.name = {"base_to_left_clawler_joint", "base_to_right_clawler_joint"};
+  joint_state_.position = {left_wheel_angle_, right_wheel_angle_};
+  joint_state_pub_->publish(joint_state_);
 
   // OdometryメッセージのPose情報をそのまま使う
   t.transform.translation.x = current_odom_.pose.pose.position.x;

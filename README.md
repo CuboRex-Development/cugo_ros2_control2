@@ -48,9 +48,16 @@ CuboRex製品では、
 # Requirement
 - OS: Ubuntu 22.04.4 LTS / ROS Distribution: ROS 2 Humble Hawksbill
 - OS: Ubuntu 24.04.4 LTS / ROS Distribution: ROS 2 Jazzy Jalisco
+- xacro
+
 
 # Installation
 ROS 2環境がない場合は[ROS 2 Documentation](https://docs.ros.org/en/Jazzy/Installation/Ubuntu-Install-Debians.html)を参照しROS 2をインストールしてください。
+
+xacroパッケージを使用しているため、aptでインストールしてください。
+~~~
+$ sudo apt install ros-$ROS_DISTRO-xacro
+~~~
 
 ROS 2のワークスペース内でgit cloneしたのち、colcon buildしてください。
 ~~~

@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<robot name="cugo" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="cugo_base">
+
+    <link name="base_footprint" />
+    <link name="base_link" />
+
+    <joint name="base_footprint_to_base_link_joint" type="fixed">
+      <parent link="base_footprint"/>
+      <child link="base_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="left_clawler_link">
+       <visual>
+        <geometry>
+          <cylinder radius="0.03835" length="0.07"/>
+        </geometry>
+        <origin rpy="1.5707 0 0" xyz="0 0 0"/>
+      </visual>
+    </link>
+
+    <joint name="base_to_left_clawler_joint" type="continuous">
+      <origin xyz="0.0 0.188 0.03835" rpy="0 0 0"/>
+      <parent link="base_link"/>
+      <child link="left_clawler_link"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+    <link name="right_crawler_link">
+      <visual>
+        <geometry>
+          <cylinder radius="0.03835" length="0.07"/>
+        </geometry>
+        <origin rpy="1.5707 0 0" xyz="0 0 0"/>
+      </visual>
+    </link>
+
+    <joint name="base_to_right_clawler_joint" type="continuous">
+      <origin xyz="0.0 -0.188 0.03835" rpy="0 0 0"/>
+      <parent link="base_link"/>
+      <child link="right_crawler_link"/>
+      <axis xyz="0 1 0"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>

@@ -48,9 +48,16 @@ CuboRex製品では、
 # Requirement
 - OS: Ubuntu 22.04.4 LTS / ROS Distribution: ROS 2 Humble Hawksbill
 - OS: Ubuntu 24.04.4 LTS / ROS Distribution: ROS 2 Jazzy Jalisco
+- xacro
+
 
 # Installation
 ROS 2環境がない場合は[ROS 2 Documentation](https://docs.ros.org/en/Jazzy/Installation/Ubuntu-Install-Debians.html)を参照しROS 2をインストールしてください。
+
+xacroパッケージを使用しているため、aptでインストールしてください。
+~~~
+$ sudo apt install ros-$ROS_DISTRO-xacro
+~~~
 
 ROS 2のワークスペース内でgit cloneしたのち、colcon buildしてください。
 ~~~
@@ -135,6 +142,28 @@ $ ros2 launch cugo_ros2_control cugov3i_ros2_control_launch.py
   - モータを交換した場合この値を調整
 
 上記のパラメータはlaunchファイルで設定されています。
+
+# TF
+CuGoを活用したロボットでTFを構築するためにxacroを利用します。
+
+ご自身のロボットに取り付けられている部品を説明するxacroを`/urdf/parts`ディレクトリに格納してください。
+デフォルトでは、
+- CuGoそのものの位置関係を表現した`cugo_base.urdf.xacro`
+- MID-360を前傾した形で設置した`/urdf/parts`
+が格納されています。
+~~~
+cugo_ros2_control2
+└── urdf
+    ├── my_cugo_robot.urdf.xacro
+    └── parts
+        ├── cugo_base.urdf.xacro
+        └── mid360.urdf.xacro
+~~~
+
+`parts`内にあるxacroを`my_cugo_robot.urdf.xacro`で読み込むことでロボット全体のTFを構築することができます。
+部品を追加する場合、`my_cugo_robot.urdf.xacro`にご自身で追加したxacro名を追記してください。
+
+追記した後は`colcon build`を行ってください。追加したファイルが反映されます。
 
 # Protocol
 [cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)と、ヘッダ8バイト・ボディ64バイトの合計72バイトから構成されるデータを通信しています。

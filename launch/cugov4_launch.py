@@ -2,6 +2,9 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from ament_index_python.packages import get_package_share_directory
+import os
+import xacro
 
 
 def generate_launch_description():
@@ -13,10 +16,28 @@ def generate_launch_description():
     )
     log_level = LaunchConfiguration('log_level')
 
+    # ---- robot_state_publisher の設定 ----
+    # パッケージの共有ディレクトリのパスを取得
+    pkg_share = get_package_share_directory('cugo_ros2_control2')
+
+    # トップレベルのxacroファイルへのパス
+    xacro_file = os.path.join(pkg_share, 'urdf', 'my_cugo_robot.urdf.xacro')
+    doc = xacro.process_file(xacro_file)
+    robot_description_config = {'robot_description': doc.toxml()}
+
+    # robot_state_publisherノードの定義
+    robot_state_publisher_node = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        output='screen',
+        parameters=[robot_description_config]
+    )
+
+    # ---- cugo_ros2_control2 の設定 ----
     # パラメータの定義
     parameters = {
         'odom_frame_id': 'odom',
-        'base_link_frame_id': 'base_link',
+        'base_link_frame_id': 'base_footprint',
         'subscribe_topic_name': '/cmd_vel',
         'publish_topic_name': '/odom',
         'control_frequency': 10.0,  # MAX:100.0
@@ -45,5 +66,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         log_level_arg,  # DeclareLaunchArgumentをLaunchDescriptionに含める
-        cugo_node
+        cugo_node,
+        robot_state_publisher_node
     ])

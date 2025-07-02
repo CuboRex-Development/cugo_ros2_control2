@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<robot name="my_custom_cugo" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- cugo共通のurdf -->
+  <xacro:include filename="$(find cugo_ros2_control2)/urdf/parts/cugo_base.urdf.xacro" />
+  <xacro:cugo_base />
+  
+  <!-- 任意のセンサを追加するurdf -->
+  <xacro:include filename="$(find cugo_ros2_control2)/urdf/parts/mid360.urdf.xacro" />
+  <xacro:mid360 />
+
+</robot>

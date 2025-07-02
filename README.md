@@ -143,6 +143,28 @@ $ ros2 launch cugo_ros2_control cugov3i_ros2_control_launch.py
 
 上記のパラメータはlaunchファイルで設定されています。
 
+# TF
+CuGoを活用したロボットでTFを構築するためにxacroを利用します。
+
+ご自身のロボットに取り付けられている部品を説明するxacroを`/urdf/parts`ディレクトリに格納してください。
+デフォルトでは、
+- CuGoそのものの位置関係を表現した`cugo_base.urdf.xacro`
+- MID-360を前傾した形で設置した`/urdf/parts`
+が格納されています。
+~~~
+cugo_ros2_control2
+└── urdf
+    ├── my_cugo_robot.urdf.xacro
+    └── parts
+        ├── cugo_base.urdf.xacro
+        └── mid360.urdf.xacro
+~~~
+
+`parts`内にあるxacroを`my_cugo_robot.urdf.xacro`で読み込むことでロボット全体のTFを構築することができます。
+部品を追加する場合、`my_cugo_robot.urdf.xacro`にご自身で追加したxacro名を追記してください。
+
+追記した後は`colcon build`を行ってください。追加したファイルが反映されます。
+
 # Protocol
 [cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)と、ヘッダ8バイト・ボディ64バイトの合計72バイトから構成されるデータを通信しています。
 ボディデータに格納されるデータの一覧は以下の通りになります。

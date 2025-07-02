@@ -25,6 +25,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2/LinearMath/Quaternion.h"
@@ -50,6 +51,7 @@ private:
   // サブスクライバーとパブリッシャー
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
   rclcpp::TimerBase::SharedPtr control_timer_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
@@ -63,11 +65,13 @@ private:
   rclcpp::Time last_cmd_vel_time_;
   rclcpp::Time last_serial_receive_time_;
   rclcpp::Time prev_control_loop_time_;
-  int32_t latest_left_encoder_{0};
-  int32_t latest_right_encoder_{0};
+  //int32_t latest_left_encoder_{0};
+  //int32_t latest_right_encoder_{0};
   int32_t prev_left_encoder_{0};
   int32_t prev_right_encoder_{0};
   bool is_first_serial_data_{true}; // 最初の受信データかどうかのフラグ
+  double left_wheel_angle_{0.0};
+  double right_wheel_angle_{0.0};
 
   // タイマーコールバック
   rclcpp::TimerBase::SharedPtr control_timer;
@@ -97,6 +101,7 @@ private:
   rclcpp::Time prev_recvtime_serial = this->get_clock()->now();
   rclcpp::Time recvtime_serial = prev_recvtime_serial;
   nav_msgs::msg::Odometry current_odom_;
+  sensor_msgs::msg::JointState joint_state_;
 };
 
 } // namespace cugo_ros2_control2

@@ -38,6 +38,14 @@ Node::Node()
   this->declare_parameter("reduction_ratio", 20.0);
   this->declare_parameter("encoder_resolution", 30);
   this->declare_parameter("product_id", 0);
+  this->declare_parameter("pose_cov_x", 0.05);
+  this->declare_parameter("pose_cov_y", 0.05);
+  this->declare_parameter("pose_cov_z", 1e9);
+  this->declare_parameter("pose_cov_roll", 1e9);
+  this->declare_parameter("pose_cov_pitch", 1e9);
+  this->declare_parameter("pose_cov_yaw", 0.1);
+  this->declare_parameter("twist_cov_linear_x", 0.001);
+  this->declare_parameter("twist_cov_angular_z", 0.001);
 
   this->get_parameter("odom_frame_id", odom_frame_id_);
   this->get_parameter("base_link_frame_id", base_link_frame_id_);
@@ -54,6 +62,14 @@ Node::Node()
   this->get_parameter("reduction_ratio", reduction_ratio);
   this->get_parameter("encoder_resolution", encoder_resolution);
   this->get_parameter("product_id", product_id);
+  this->get_parameter("pose_cov_x", pose_cov_x_);
+  this->get_parameter("pose_cov_y", pose_cov_y_);
+  this->get_parameter("pose_cov_z", pose_cov_z_);
+  this->get_parameter("pose_cov_roll", pose_cov_roll_);
+  this->get_parameter("pose_cov_pitch", pose_cov_pitch_);
+  this->get_parameter("pose_cov_yaw", pose_cov_yaw_);
+  this->get_parameter("twist_cov_linear_x", twist_cov_x_);
+  this->get_parameter("twist_cov_angular_z", twist_cov_yaw_);
 
   RCLCPP_INFO(this->get_logger(), "設定パラメータ");
   RCLCPP_INFO(this->get_logger(), "odom_frame_id: %s", odom_frame_id_.c_str());
@@ -132,6 +148,7 @@ void Node::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
 // シリアルデータ受信時のコールバック (Serialクラスから呼ばれる)
 void Node::serial_data_callback(const std::vector<unsigned char> & body_data)
 {
+  RCLCPP_DEBUG(this->get_logger(), "serial_data_callback()");
   rclcpp::Time current_receive_time = this->get_clock()->now();
 
   // 1. ボディデータからエンコーダ値を取得
@@ -201,6 +218,16 @@ void Node::serial_data_callback(const std::vector<unsigned char> & body_data)
     q_new.setRPY(0, 0, updated_odom_state.yaw);
     current_odom_.pose.pose.orientation = tf2::toMsg(q_new);
 
+    // 共分散を反映
+    current_odom_.pose.covariance[0] = pose_cov_x_;
+    current_odom_.pose.covariance[7] = pose_cov_y_;
+    current_odom_.pose.covariance[14] = pose_cov_z_;
+    current_odom_.pose.covariance[21] = pose_cov_roll_;
+    current_odom_.pose.covariance[28] = pose_cov_pitch_;
+    current_odom_.pose.covariance[35] = pose_cov_yaw_;
+    current_odom_.twist.covariance[0] = twist_cov_x_;
+    current_odom_.twist.covariance[35] = twist_cov_yaw_;
+
     // 次の計算のために、今回の値を「前回値」として保存
     prev_left_encoder_ = current_left_encoder;
     prev_right_encoder_ = current_right_encoder;
@@ -214,6 +241,7 @@ void Node::serial_data_callback(const std::vector<unsigned char> & body_data)
 
 void Node::control_loop()
 {
+  RCLCPP_DEBUG(this->get_logger(), "control_loop()");
   // --- 共有データをローカルにコピー ---
   geometry_msgs::msg::Twist local_cmd_vel;
   rclcpp::Time local_last_cmd_vel_time;
@@ -250,8 +278,19 @@ void Node::control_loop()
     RCLCPP_WARN(this->get_logger(), "シリアル通信未達。接続を確認してください。");
     // Picoが機能不全の可能性。速度ゼロのオドメトリを発行して異常を知らせる。
     std::lock_guard<std::mutex> lock(data_mutex_);
+    RCLCPP_DEBUG(this->get_logger(), "速度０共分散無限大を入力");
     current_odom_.twist.twist.linear.x = 0.0;
     current_odom_.twist.twist.angular.z = 0.0;
+    // 共分散を大きく設定。通信失敗時にオドメトリの信頼度を著しく下げる
+    current_odom_.pose.covariance[0] = 1e9;
+    current_odom_.pose.covariance[7] = 1e9;
+    current_odom_.pose.covariance[14] = 1e9;
+    current_odom_.pose.covariance[21] = 1e9;
+    current_odom_.pose.covariance[28] = 1e9;
+    current_odom_.pose.covariance[35] = 1e9;
+    current_odom_.twist.covariance[0] = 1e9;
+    current_odom_.twist.covariance[35] = 1e9;
+
     publish_odom_and_tf(); // 既に止まっている位置情報と速度ゼロを定期的に発行
     RCLCPP_DEBUG(this->get_logger(), "control_loop() published");
   }

@@ -93,6 +93,17 @@ private:
   int encoder_resolution;
   int product_id;
   int robot_id;
+  double pose_cov_x_;
+  double pose_cov_y_;
+  double pose_cov_z_;
+  double pose_cov_roll_;
+  double pose_cov_pitch_;
+  double pose_cov_yaw_;
+  double twist_cov_x_;
+  double twist_cov_yaw_;
+
+  std::array<double, 36> pose_covariance_{};
+  std::array<double, 36> twist_covariance_{};
 
   // ROSでの共有データ
   double linear_x, angular_z;

@@ -50,7 +50,22 @@ def generate_launch_description():
         'r_wheel_radius': 0.03858,  # cugov3iのスプロケット半径
         'reduction_ratio': 15.0,    # cugov3iのオリエンタルモータの減速比
         'encoder_resolution': 24,   # cugov3iのオリエンタルモータのエンコーダホール数
-        'product_id': 1             # cugov3iの識別子
+        'product_id': 1,            # cugov3iの識別子
+
+        # 共分散の設定
+        # SLAMやLocalizationで調整
+        # オドメトリで悪影響がある場合は調整してください
+        # オドメトリの自己位置
+        'pose_cov_x': 0.025, # 0.05m^2
+        'pose_cov_y': 0.025, # 0.05m^2
+        'pose_cov_z': 1e9,
+        'pose_cov_roll': 1e9,
+        'pose_cov_pitch': 1e9,
+        'pose_cov_yaw': 0.01, # 0.1rad^2
+
+        # ロボットの速度
+        'twist_cov_linear_x': 0.0001, # 0.01m^2
+        'twist_cov_angular_z': 0.0001, # 0.01m^2
     }
 
     # ノードの定義

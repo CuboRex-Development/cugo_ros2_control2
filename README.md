@@ -5,7 +5,7 @@
 クローラロボット開発プラットフォームのROS 2ノードです。
 
 ROS 2 topicの`/cmd_vel`をSubscribeし、`/odom`をPublishします。
-セットで[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_arduinodriver.git)使用します。
+セットで[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb-ros2-control2)使用します。
 
 ROS 2 Humble以降でご利用いただけます。
 
@@ -23,7 +23,7 @@ Subscribeした`/cmd_vel`の速度ベクトルになるような仮想車輪L/R�
 
 計算した回転数をロボットのマイコンに送信します。
 
-また、[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)が書き込まれたロボットのマイコンからエンコーダのカウント数を受け取ります。
+また、[cugo_ros_motorcontroller](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb-ros2-control2)が書き込まれたロボットのマイコンからエンコーダのカウント数を受け取ります。
 
 カウント数からロボットのオドメトリを計算し、`/odom`を生成しPublishします。
 
@@ -38,8 +38,10 @@ CuboRex製品では、
 でお使いいただけます。
 
 
-クローラロボット開発プラットフォーム付属のRaspberryPiPicoに[こちらのスケッチ](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb)を書き込み、ROS 2 PCとRaspberryPiPicoをUSBケーブルで接続してください。
+クローラロボット開発プラットフォーム付属のRaspberryPiPicoに[こちらのスケッチ](https://github.com/CuboRex-Development/cugo_ros_motorcontroller/tree/pico-usb-ros2-control2)を書き込み、ROS 2 PCとRaspberryPiPicoをUSBケーブルで接続してください。
 その後ROSパッケージを実行してください。自動で通信開始します。
+
+もし、うまくプログラム走行を開始しない場合は、一度USBケーブルを抜き、ロボットの電源をOFFONしてから再度PCとRaspberryPiPicoをUSBケーブルで接続してください。
 
 
 スケッチの書き換えはROS PCである必要性はありません。
@@ -49,23 +51,27 @@ CuboRex製品では、
 - OS: Ubuntu 22.04.4 LTS / ROS Distribution: ROS 2 Humble Hawksbill
 - OS: Ubuntu 24.04.4 LTS / ROS Distribution: ROS 2 Jazzy Jalisco
 - xacro
+- robot_state_publisher
 
 
 # Installation
 ROS 2環境がない場合は[ROS 2 Documentation](https://docs.ros.org/en/Jazzy/Installation/Ubuntu-Install-Debians.html)を参照しROS 2をインストールしてください。
 
-xacroパッケージを使用しているため、aptでインストールしてください。
-~~~
-$ sudo apt install ros-$ROS_DISTRO-xacro
-~~~
 
 ROS 2のワークスペース内でgit cloneしたのち、colcon buildしてください。
 ~~~
-$ cd ~/your/ros_workspace/ros2_ws/src
+$ cd ~/your_ros2_ws/src
 $ git clone https://github.com/CuboRex-Development/cugo_ros2_control2.git
 $ cd ../..
 $ colcon build --symlink-install
-$ source ~/your/ros_workspace/ros2_ws/install/local_setup.bash
+$ source ~/your_ros2_ws/install/local_setup.bash
+~~~
+
+ビルドエラーが発生する場合、依存パッケージをインストールしてから再度`colcon build`してください。
+~~~
+$ rosdep install -i --from-paths ~/your_ros2_ws/src/cugo_ros2_control2
+$ cd ~/your_ros2_ws
+$ colcon build --symlink-install
 ~~~
 
 # Usage
@@ -81,7 +87,7 @@ $ source ~/your/ros_workspace/ros2_ws/install/local_setup.bash
 $ sudo chmod 777 /dev/ttyACM0
 
 # launch ファイルを実行
-$ ros2 launch cugo_ros2_control cugov4_ros2_control_launch.py
+$ ros2 launch cugo_ros2_control2 cugov4_ros2_control_launch.py
 ~~~
 
 #### クローラロボット開発プラットフォーム CuGo V3iの方
@@ -93,7 +99,7 @@ $ ros2 launch cugo_ros2_control cugov4_ros2_control_launch.py
 $ sudo chmod 777 /dev/ttyACM0
 
 # launch ファイルを実行
-$ ros2 launch cugo_ros2_control cugov3i_ros2_control_launch.py
+$ ros2 launch cugo_ros2_control2 cugov3i_ros2_control_launch.py
 ~~~
 
 # Topics and Parameters
@@ -131,7 +137,7 @@ $ ros2 launch cugo_ros2_control cugov3i_ros2_control_launch.py
 - `l_wheel_radius (float, default: 0.03858)`
   - 左クローラの仮想タイヤ半径[m]
   - まっすぐ走らせてオドメトリがだんだん左に曲がっていく場合この値を少しだけ大きくするとよい（0.00002m刻み）
-- `l_wheel_radius (float, default: 0.03858)`
+- `r_wheel_radius (float, default: 0.03858)`
   - 右クローラの仮想タイヤ半径[m]
   - まっすぐ走らせてオドメトリがだんだん右に曲がっていく場合この値を少しだけ大きくするとよい（0.00002m刻み）
 - `reduction_ratio (float, default: 20.0)`
@@ -149,7 +155,7 @@ CuGoを活用したロボットでTFを構築するためにxacroを利用しま
 ご自身のロボットに取り付けられている部品を説明するxacroを`/urdf/parts`ディレクトリに格納してください。
 デフォルトでは、
 - CuGoそのものの位置関係を表現した`cugo_base.urdf.xacro`
-- MID-360を前傾した形で設置した`/urdf/parts`
+- MID-360を前傾した形で設置した`/urdf/parts` (部品を追加した作例です。製品には付属していません。)
 が格納されています。
 ~~~
 cugo_ros2_control2
@@ -160,7 +166,8 @@ cugo_ros2_control2
         └── mid360.urdf.xacro
 ~~~
 
-`parts`内にあるxacroを`my_cugo_robot.urdf.xacro`で読み込むことでロボット全体のTFを構築することができます。
+`parts`内にある部品xacroを`my_cugo_robot.urdf.xacro`が読み込むことでロボット全体のTFを構築することができます。
+`my_cugo_robot.urdf.xacro` は `robot_state_publisher` によって、ロボット構成のTFを配信します。
 部品を追加する場合、`my_cugo_robot.urdf.xacro`にご自身で追加したxacro名を追記してください。
 
 追記した後は`colcon build`を行ってください。追加したファイルが反映されます。
